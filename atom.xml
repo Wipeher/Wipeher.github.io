@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://Wipeher.github.io</id>
     <title>Gridea</title>
-    <updated>2020-05-23T10:10:47.682Z</updated>
+    <updated>2020-05-23T12:15:29.340Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://Wipeher.github.io"/>
     <link rel="self" href="https://Wipeher.github.io/atom.xml"/>
@@ -31,7 +31,8 @@
 <p>看到这里就有一种同步等于阻塞，异步等于非阻塞的错觉</p>
 <p>这里引用陈硕在知乎的回答：怎样理解阻塞非阻塞与同步异步的区别？ - 陈硕的回答 - 知乎 https://www.zhihu.com/question/19732473/answer/26091478</p>
 <p>在处理IO的时候，阻塞和非阻塞都是同步IO，</p>
-<h2 id="只有使用了特殊的api才是异步io">只有使用了特殊的API才是异步IO</h2>
+<p>只有使用了特殊的API才是异步IO</p>
+<hr>
 <h4 id="并发concurrency和并行parallelism">并发(Concurrency)和并行(parallelism)</h4>
 <blockquote>
 <p>并发和并行是两个非常容易被混淆的概念。</p>
@@ -40,7 +41,7 @@
 </blockquote>
 <hr>
 <h4 id="临界区">临界区</h4>
-<p>临界区用来表示一种公共资源或者共享数据，可以被多个线程使用。每一次，都只有一个线程能够使用它。</p>
+<p>临界区用来表示一种公共资源或者共享数据，可以被多个线程使用。每一次，都只有一个线程能够使用它。临界区资源如果被占用，其他线程必须等待。</p>
 ]]></content>
     </entry>
     <entry>
