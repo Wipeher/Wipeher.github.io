@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://Wipeher.github.io</id>
     <title>Gridea</title>
-    <updated>2020-05-23T09:08:04.804Z</updated>
+    <updated>2020-05-23T09:12:13.355Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://Wipeher.github.io"/>
     <link rel="self" href="https://Wipeher.github.io/atom.xml"/>
@@ -10,6 +10,30 @@
     <logo>https://Wipeher.github.io/images/avatar.png</logo>
     <icon>https://Wipeher.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[java并发设计-基础概念]]></title>
+        <id>https://Wipeher.github.io/post/java-bing-fa-she-ji-ji-chu-gai-nian/</id>
+        <link href="https://Wipeher.github.io/post/java-bing-fa-she-ji-ji-chu-gai-nian/">
+        </link>
+        <updated>2020-05-23T09:06:51.000Z</updated>
+        <content type="html"><![CDATA[<!-- more -->
+<h4 id="同步synchronous和异步asynchronous">同步(Synchronous)和异步(Asynchronous)</h4>
+<blockquote>
+<p>同步指的是方法调用，必须要等方法调用返回之后，才能继续后续其他行为。</p>
+<p>异步指的是方法调用，开始调用可以立即返回。调用者可以继续后续的行为。异步方法通常另开一个线程执行。而且被调用方通过其他方式通知调用者。</p>
+</blockquote>
+<p>有意思的是，一般情况，大家会把同步异步和阻塞非阻塞放在一起组合。也很容易混淆。</p>
+<h4 id="阻塞和非阻塞">阻塞和非阻塞</h4>
+<blockquote>
+<p>阻塞指的是调用方在等待调用方法返回之前，需要一直等待结果返回。</p>
+<p>非阻塞指的是不不管调用是否返回，都去执行其他行为。</p>
+</blockquote>
+<p>看到这里就有一种同步等于阻塞，异步等于非阻塞的错觉</p>
+<p>这里引用陈硕在知乎的回答：怎样理解阻塞非阻塞与同步异步的区别？ - 陈硕的回答 - 知乎 https://www.zhihu.com/question/19732473/answer/26091478</p>
+<p>在处理IO的时候，阻塞和非阻塞都是同步IO，</p>
+<p>只有使用了特殊的API才是异步IO</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Hello Gridea]]></title>
         <id>https://Wipeher.github.io/post/hello-gridea/</id>
