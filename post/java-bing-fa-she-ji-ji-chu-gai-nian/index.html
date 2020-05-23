@@ -3,7 +3,7 @@
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>java并发设计-基础概念 | Gridea</title>
-<link rel="shortcut icon" href="https://Wipeher.github.io/favicon.ico?v=1590225130598">
+<link rel="shortcut icon" href="https://Wipeher.github.io/favicon.ico?v=1590228555462">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://Wipeher.github.io/styles/main.css">
 <link rel="alternate" type="application/atom+xml" title="java并发设计-基础概念 | Gridea - Atom Feed" href="https://Wipeher.github.io/atom.xml">
@@ -25,7 +25,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://Wipeher.github.io">
-  <img class="avatar" src="https://Wipeher.github.io/images/avatar.png?v=1590225130598" alt="">
+  <img class="avatar" src="https://Wipeher.github.io/images/avatar.png?v=1590228555462" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -107,7 +107,16 @@
 <p>看到这里就有一种同步等于阻塞，异步等于非阻塞的错觉</p>
 <p>这里引用陈硕在知乎的回答：怎样理解阻塞非阻塞与同步异步的区别？ - 陈硕的回答 - 知乎 https://www.zhihu.com/question/19732473/answer/26091478</p>
 <p>在处理IO的时候，阻塞和非阻塞都是同步IO，</p>
-<p>只有使用了特殊的API才是异步IO</p>
+<h2 id="只有使用了特殊的api才是异步io">只有使用了特殊的API才是异步IO</h2>
+<h4 id="并发concurrency和并行parallelism">并发(Concurrency)和并行(parallelism)</h4>
+<blockquote>
+<p>并发和并行是两个非常容易被混淆的概念。</p>
+<p>并发是指同一时刻只能有一条指令执行，但是多个线程的对应的指令被快速交替轮换地执行。</p>
+<p>并行是真正意义上的同时执行，指同一时刻，有多条指令在多个处理器上同时执行。并行必须要依赖于多个处理器。不论是从宏观上还是微观上。</p>
+</blockquote>
+<hr>
+<h4 id="临界区">临界区</h4>
+<p>临界区用来表示一种公共资源或者共享数据，可以被多个线程使用。每一次，都只有一个线程能够使用它。</p>
 
               </div>
               <div class="toc-container">
@@ -122,6 +131,13 @@
 <li><a href="#%E9%98%BB%E5%A1%9E%E5%92%8C%E9%9D%9E%E9%98%BB%E5%A1%9E">阻塞和非阻塞</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li><a href="#%E5%8F%AA%E6%9C%89%E4%BD%BF%E7%94%A8%E4%BA%86%E7%89%B9%E6%AE%8A%E7%9A%84api%E6%89%8D%E6%98%AF%E5%BC%82%E6%AD%A5io">只有使用了特殊的API才是异步IO</a><br>
+*
+<ul>
+<li><a href="#%E5%B9%B6%E5%8F%91concurrency%E5%92%8C%E5%B9%B6%E8%A1%8Cparallelism">并发(Concurrency)和并行(parallelism)</a></li>
+<li><a href="#%E4%B8%B4%E7%95%8C%E5%8C%BA">临界区</a></li>
 </ul>
 </li>
 </ul>
