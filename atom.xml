@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://Wipeher.github.io</id>
     <title>Gridea</title>
-    <updated>2020-05-23T12:15:29.340Z</updated>
+    <updated>2020-05-31T16:57:55.302Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://Wipeher.github.io"/>
     <link rel="self" href="https://Wipeher.github.io/atom.xml"/>
@@ -23,7 +23,7 @@
 <p>异步指的是方法调用，开始调用可以立即返回。调用者可以继续后续的行为。异步方法通常另开一个线程执行。而且被调用方通过其他方式通知调用者。</p>
 </blockquote>
 <p>有意思的是，一般情况，大家会把同步异步和阻塞非阻塞放在一起组合。也很容易混淆。</p>
-<h4 id="阻塞和非阻塞">阻塞和非阻塞</h4>
+<h4 id="阻塞blocking和非阻塞non-blocking">阻塞(Blocking)和非阻塞(Non-Blocking)</h4>
 <blockquote>
 <p>阻塞指的是调用方在等待调用方法返回之前，需要一直等待结果返回。</p>
 <p>非阻塞指的是不不管调用是否返回，都去执行其他行为。</p>
@@ -42,6 +42,51 @@
 <hr>
 <h4 id="临界区">临界区</h4>
 <p>临界区用来表示一种公共资源或者共享数据，可以被多个线程使用。每一次，都只有一个线程能够使用它。临界区资源如果被占用，其他线程必须等待。</p>
+<hr>
+<p>死锁(DeadLock)、 饥饿(Starvation)和活锁(Livelock)</p>
+<blockquote>
+<p>死锁，与其他锁互相依赖等待释放，结果导致都不能释放。</p>
+<p>饥饿是指某一个或者多个线程因为种种原因无法获得所需要的资源，导致一直无法执行。比如线程优先级可能太低，而高优先级的线程不断抢占它需要的资源，导致低优先级的线程无法工作。</p>
+<p>(在Linux系统编程一书中提到，不合适的编码，一样可能导致线程优先级低的线程抢占线程优先级高的线程)</p>
+<p>活锁这种现象比较少见，都是主动将资源让给其他线程，最终导致多个线程都拿不到资源，没有一个线程可以执行。</p>
+</blockquote>
+<hr>
+<p><strong>根据控制并发的策略，可以把并发分成几个不同的级别</strong></p>
+<blockquote>
+<ol>
+<li>阻塞</li>
+</ol>
+<blockquote>
+<p>一个线程阻塞，则其他线程释放资源之前，当前线程无法继续执行。</p>
+</blockquote>
+<ol start="2">
+<li>
+<p>无饥饿(Starbation-Free)</p>
+<blockquote>
+<p>线程之间有优先级，那么线程调度时，会尽量满足线程优先级高的线程(请注意：这里用的是尽量，因为线程优先级并不总是有效)</p>
+<p>当然锁也有公平锁和非公平锁的区分。</p>
+</blockquote>
+</li>
+<li>
+<p>无障碍(Obstruction-Free)</p>
+<blockquote>
+<p>其实可以理解为乐观锁的理论依据</p>
+</blockquote>
+</li>
+<li>
+<p>无锁(Lock-Free)</p>
+<blockquote>
+<p>无锁的并行都是无障碍的。在无锁的情况下，所有的线程都尝试对临界区进行访问。</p>
+</blockquote>
+</li>
+<li>
+<p>无等待(Wait-Free)</p>
+<blockquote>
+<p>无锁只要求一个线程可以在有限步执行完，而无等待则在无锁的基础上更进一步。要求所有的线程都必须在有限步内完成。</p>
+</blockquote>
+</li>
+</ol>
+</blockquote>
 ]]></content>
     </entry>
     <entry>
