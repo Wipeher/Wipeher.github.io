@@ -3,7 +3,7 @@
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>JDK 并发包 | Gridea</title>
-<link rel="shortcut icon" href="https://Wipeher.github.io/favicon.ico?v=1591187831482">
+<link rel="shortcut icon" href="https://Wipeher.github.io/favicon.ico?v=1591344241427">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://Wipeher.github.io/styles/main.css">
 <link rel="alternate" type="application/atom+xml" title="JDK 并发包 | Gridea - Atom Feed" href="https://Wipeher.github.io/atom.xml">
@@ -11,14 +11,14 @@
 
 
 
-    <meta name="description" content="（本文作为笔记，书籍java高并发程序设计(葛一鸣)，java并发编程之美，精通java并发编程，极客时间专栏，java并发编程实战）
+    <meta name="description" content="（本文作为笔记，记录书籍java高并发程序设计(葛一鸣)，java并发编程之美，精通java并发编程，极客时间专栏，java并发编程实战）
 并发编程可以总结为三个核心问题：分工、同步、互斥
 
 
 分工指的是如何高效的拆解任务并分配给线程
 
 
-同步..." />
+..." />
     <meta name="keywords" content="java" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
     <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
@@ -28,7 +28,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://Wipeher.github.io">
-  <img class="avatar" src="https://Wipeher.github.io/images/avatar.png?v=1591187831482" alt="">
+  <img class="avatar" src="https://Wipeher.github.io/images/avatar.png?v=1591344241427" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -88,7 +88,7 @@
                 2020-06-01
               </span>
               <span>
-                8 min read
+                31 min read
               </span>
               
                 <a href="https://Wipeher.github.io/tag/nPT-jTz-p/" class="post-tag">
@@ -99,7 +99,7 @@
             
             <div class="post-content-wrapper">
               <div class="post-content">
-                <p>（本文作为笔记，书籍java高并发程序设计(葛一鸣)，java并发编程之美，精通java并发编程，极客时间专栏，java并发编程实战）</p>
+                <p>（本文作为笔记，记录书籍java高并发程序设计(葛一鸣)，java并发编程之美，精通java并发编程，极客时间专栏，java并发编程实战）</p>
 <h4 id="并发编程可以总结为三个核心问题分工-同步-互斥"><em><strong>并发编程可以总结为三个核心问题：分工、同步、互斥</strong></em></h4>
 <blockquote>
 <blockquote>
@@ -366,6 +366,578 @@ public class RateLimiterDemo {
 </code></pre>
 <p>因为limiter限制的是1秒两次调用.也就是每500毫秒产生一个令牌，显然for循环的效率很高，因此本段代码最终只产生一个输出。</p>
 <h3 id="线程复用线程池">线程复用：线程池</h3>
+<blockquote>
+<p>线程的创建和销毁会占用计算机资源，带给GC极大的压力。所以频繁的创建销毁线程是不合适的。而且即使线程本身也是占用计算机资源的，即使是持有大量线程，很容易造成out of memory异常。</p>
+<p>所以线程的使用应该是有策略性的，对线程的使用应该加以控制。</p>
+<p>线程池的登场也是如此。即是对线程的复用。</p>
+</blockquote>
+<p>JDK对线程的支持</p>
+<blockquote>
+<p>Executor类库，本质就是一个线程池，如图</p>
+</blockquote>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/%E7%BA%BF%E7%A8%8B%E6%B1%A0.jpg" alt="" loading="lazy"></figure>
+<p>以上成员均来自java.util.concurrent包，是JDK并发包的核心包。</p>
+<blockquote>
+<p>ThreadPoolExecutor表示一个线程池。Executors类则扮演着线程池工厂的角色，通过Executors可以取得一个拥有特定功能的线程池。</p>
+<p><em><strong>注意：阿里的编码规范明确要求不要使用Executors创建线程池，因为隐藏了线程池创建的细节</strong></em></p>
+</blockquote>
+<p>图中可知：ThreadPoolExecutor类实现了Executor接口，因此通过这个接口，任何Runnable接口都可以被ThreadPoolExecutor线程池调度。</p>
+<p>Executor框架提供了各种类型的线程池，方法如下：</p>
+<pre><code class="language-java">public static ExecutorService newFixedThreadPool(int nThread)
+public static ExecutorService newSingleThreadExecutor()
+public static ExecutorService newCachedThreadPool()
+public static ScheduledExecutorServce newSingleThreadScheduledExecutor()
+public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize)
+</code></pre>
+<p>这些线程池代表了不同的分配策略和特性</p>
+<ul>
+<li>newFixedThreadPool()方法：该方法返回一个固定线程数量的线程池，该线程池中的线程数量始终不变。当有一个新的任务提交时，线程池中若有空闲线程，则立即执行。若没有，则新的任务会被暂时放在一个任务队列中，待有线程空闲时，便处理任务队列中的任务。</li>
+<li>newSingleThreadExecutor()方法：该方法返回一个只有一个线程的线程池。若多余一个任务被提交到该线程池，任务会被保存在一个任务队列中，待线程空闲，按先入先出的顺序执行队列中的任务。</li>
+<li>newCachedThreadPool()方法：该方法返回一个可根据实际情况调整线程数量的线程池。线程池的线程数量不确定，但若有空闲线程可以复用，则会优先使用可复用线程。若所有线程均在工作，又有新的任务提交，则会创建新的线程处理任务。所有线程在当前任务执行完毕后，将返回线程池进行复用。</li>
+<li>newSingleThreadScheduledExecutor()方法：该方法返回一个ScheduledExecutorService对象，线程池大小为1。ScheduledExecutorService接口在ExecutorService接口之上拓展了在给定时间执行某任务的功能，如在某个固定的延时之后执行，或者周期性执行某个任务。</li>
+<li>newScheduledThreadPool()方法：该方法也返回一个ScheduledExcutorService对象，但该线程可以指定线程数量。</li>
+</ul>
+<ol>
+<li>
+<p>固定大小的线程池</p>
+<pre><code class="language-java">import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/**
+ * 线程池
+ * @author Administrator
+ *
+ */
+public class ThreadPoolDemo {
+	public static class MyTask implements Runnable {
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			System.out.println(System.currentTimeMillis() + &quot;: Thread ID: &quot; + Thread.currentThread().getId());
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void main(String[] args) {
+		MyTask task = new MyTask();
+		ExecutorService executorService = Executors.newFixedThreadPool(5);
+		for (int i = 0; i &lt; 10; i++) {
+			executorService.submit(task);
+		}
+	}
+	
+}
+</code></pre>
+<p>运行结果：</p>
+<pre><code class="language-java">1591255670097: Thread ID: 23
+1591255670097: Thread ID: 25
+1591255670097: Thread ID: 24
+1591255670097: Thread ID: 21
+1591255670097: Thread ID: 22
+1591255671099: Thread ID: 21
+1591255671099: Thread ID: 25
+1591255671099: Thread ID: 23
+1591255671099: Thread ID: 24
+1591255671099: Thread ID: 22
+
+</code></pre>
+<p>创建了一个固定大小的线程池，内有5个线程。然后依次提交十次任务，线程池则会调度10个任务。每个任务先睡眠一秒，然后都会将自己的执行时间和执行这个线程ID打印出来。</p>
+</li>
+<li>
+<p>计划任务</p>
+<p>newScheduledThreadPool()。它返回的是一个ScheduledExecutorService对象。可以根据时间需要对线程进行调度。它的一些主要方法如下：</p>
+<pre><code class="language-java">	/**
+     * Submits a one-shot task that becomes enabled after the given delay.
+     */
+    public ScheduledFuture&lt;?&gt; schedule(Runnable command,
+                                       long delay, TimeUnit unit);
+
+	/**
+	 * 提交一个周期性任务，任务开始于给定的初始延时。后续的任务按照给定的周期进行：后续第一个任务将会在initialDelay + 2 * period时进行。
+     * Submits a periodic action that becomes enabled first after the
+     * given initial delay, and subsequently with the given period;
+     * that is, executions will commence after
+     * {@code initialDelay}, then {@code initialDelay + period}, then
+     * {@code initialDelay + 2 * period}, and so on.
+     *
+     * &lt;p&gt;The sequence of task executions continues indefinitely until
+     * one of the following exceptional completions occur:
+     * &lt;ul&gt;
+     * &lt;li&gt;The task is {@linkplain Future#cancel explicitly cancelled}
+     * via the returned future.
+     * &lt;li&gt;The executor terminates, also resulting in task cancellation.
+     * &lt;li&gt;An execution of the task throws an exception.  In this case
+     * calling {@link Future#get() get} on the returned future will throw
+     * {@link ExecutionException}, holding the exception as its cause.
+     * &lt;/ul&gt;
+     * Subsequent executions are suppressed.  Subsequent calls to
+     * {@link Future#isDone isDone()} on the returned future will
+     * return {@code true}.
+     *
+     * &lt;p&gt;If any execution of this task takes longer than its period, then
+     * subsequent executions may start late, but will not concurrently
+     * execute.
+     *
+     * @param command the task to execute
+     * @param initialDelay the time to delay first execution
+     * @param period the period between successive executions
+     * @param unit the time unit of the initialDelay and period parameters
+     * @return a ScheduledFuture representing pending completion of
+     *         the series of repeated tasks.  The future's {@link
+     *         Future#get() get()} method will never return normally,
+     *         and will throw an exception upon task cancellation or
+     *         abnormal termination of a task execution.
+     * @throws RejectedExecutionException if the task cannot be
+     *         scheduled for execution
+     * @throws NullPointerException if command or unit is null
+     * @throws IllegalArgumentException if period less than or equal to zero
+     */
+    public ScheduledFuture&lt;?&gt; scheduleAtFixedRate(Runnable command,
+                                                  long initialDelay,
+                                                  long period,
+                                                  TimeUnit unit);
+
+    /**
+     * 提交一个周期性任务。任务开始于初始延时时间，后续任务将会按照给定的延时进行延时：即上一个任务的结束时间到下一个任务的开始时间的时间差。
+     * Submits a periodic action that becomes enabled first after the
+     * given initial delay, and subsequently with the given delay
+     * between the termination of one execution and the commencement of
+     * the next.
+     *
+     * &lt;p&gt;The sequence of task executions continues indefinitely until
+     * one of the following exceptional completions occur:
+     * &lt;ul&gt;
+     * &lt;li&gt;The task is {@linkplain Future#cancel explicitly cancelled}
+     * via the returned future.
+     * &lt;li&gt;The executor terminates, also resulting in task cancellation.
+     * &lt;li&gt;An execution of the task throws an exception.  In this case
+     * calling {@link Future#get() get} on the returned future will throw
+     * {@link ExecutionException}, holding the exception as its cause.
+     * &lt;/ul&gt;
+     * Subsequent executions are suppressed.  Subsequent calls to
+     * {@link Future#isDone isDone()} on the returned future will
+     * return {@code true}.
+     *
+     * @param command the task to execute
+     * @param initialDelay the time to delay first execution
+     * @param delay the delay between the termination of one
+     * execution and the commencement of the next
+     * @param unit the time unit of the initialDelay and delay parameters
+     * @return a ScheduledFuture representing pending completion of
+     *         the series of repeated tasks.  The future's {@link
+     *         Future#get() get()} method will never return normally,
+     *         and will throw an exception upon task cancellation or
+     *         abnormal termination of a task execution.
+     * @throws RejectedExecutionException if the task cannot be
+     *         scheduled for execution
+     * @throws NullPointerException if command or unit is null
+     * @throws IllegalArgumentException if delay less than or equal to zero
+     */
+    public ScheduledFuture&lt;?&gt; scheduleWithFixedDelay(Runnable command,
+                                                     long initialDelay,
+                                                     long delay,
+                                                     TimeUnit unit);
+</code></pre>
+<p>与其他线程池不同，ScheduledExecutorService 并不一定会立即安排执行任务。它其实是起到了计划任务的作用。它会在指定的时间，对任务进行调度。</p>
+<p>schedule()会在给定时间，对任务进行一次调度。方法scheduleAtFixedRate() 和方法schedleWithFixedDelay()会对任务进行周期性的调度，但是两者有点小区别。</p>
+<p>对于fixedRate方式来说，任务调度的频率是一定的，是以上一个任务开始执行时间为起点，在之后的period时间调度下一次任务。而FixDelay方式则是在上一个任务结束后，再经过delay时间进行任务调度。</p>
+<pre><code class="language-java">import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 定时任务
+ * @author Administrator
+ *
+ */
+public class ScheduledExecutorServiceDemo {
+	
+	public static void main(String[] args) {
+		ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10);
+		//如果前面的任务没有完成，则调度也不会启动
+		scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+			
+			@Override
+			public void run() {
+				
+				try {
+					Thread.sleep(1000);
+					System.out.println(System.currentTimeMillis() / 1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		}, 0, 2, TimeUnit.SECONDS);
+	}	
+
+}
+</code></pre>
+<p>运行结果：</p>
+<pre><code class="language-java">1591259170
+1591259172
+1591259174
+1591259176
+
+</code></pre>
+<p>有个问题：如果执行任务的时间超过调度等待时间会发生什么情况？比如，这里调度周期时2秒，如果任务的执行时间是8秒，那么会不会出现多个任务叠加在一起。</p>
+<p>其实是不会的，ScheduledExecutorService不会让任务堆叠出现。此时，可以将代码改为</p>
+<pre><code class="language-java">Thread.sleep(8000);
+</code></pre>
+<p>再次执行，则会发现任务的执行周期不再是2秒，二十变成了8秒。</p>
+<p>运行结果：</p>
+<pre><code class="language-java">1591259555
+1591259563
+1591259571
+1591259579
+1591259587
+</code></pre>
+<p>即周期如果太短，那么任务就会在上一个任务结束后立即被调用。可以想象，如果 采用scheduleWithFixedDelay()方法，并且按照修改8秒，调度周期2秒计，那么任务的实际间隔就是10秒。</p>
+<blockquote>
+<p>调度程序实际上并不保证任务会无期限地持续调用，如果任务本身抛出了异常，那么后续的所有执行都会被中断，因此，如果你想让你的任务持续稳定的执行，那么做好异常处理非常重要，否则你很有可能观察到调度器无疾而终。</p>
+</blockquote>
+<p><em><strong>注意：如果任务遇到异常，那么后续所有调度的子任务都会停止调度，因此，必须保证异常被及时处理，为周期性任务的稳定调度提供条件。</strong></em></p>
+</li>
+<li>
+<p>线程池的内部实现</p>
+</li>
+<li>
+<p>对于核心的几个线程池，无论是newFixedThreadPool()方法，newSingleThreadExecutor()方法，还是newCachedThreadPool()方法。其实看起来创建的线程有着完全不同的功能特点，但其内部实现均使用了ThreadPoolExecutor类。</p>
+<pre><code class="language-java">    public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory threadFactory) {
+        return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue&lt;Runnable&gt;(),
+                                      threadFactory);
+    }
+
+    public static ExecutorService newSingleThreadExecutor() {
+        return new FinalizableDelegatedExecutorService
+            (new ThreadPoolExecutor(1, 1,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue&lt;Runnable&gt;()));
+    }
+
+    public static ExecutorService newSingleThreadExecutor(ThreadFactory threadFactory) {
+        return new FinalizableDelegatedExecutorService
+            (new ThreadPoolExecutor(1, 1,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue&lt;Runnable&gt;(),
+                                    threadFactory));
+    }
+</code></pre>
+<p>其实都是对ThreadPoolExecutor类的封装。</p>
+<pre><code class="language-java">    public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue&lt;Runnable&gt; workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) {
+        if (corePoolSize &lt; 0 ||
+            maximumPoolSize &lt;= 0 ||
+            maximumPoolSize &lt; corePoolSize ||
+            keepAliveTime &lt; 0)
+            throw new IllegalArgumentException();
+        if (workQueue == null || threadFactory == null || handler == null)
+            throw new NullPointerException();
+        this.corePoolSize = corePoolSize;
+        this.maximumPoolSize = maximumPoolSize;
+        this.workQueue = workQueue;
+        this.keepAliveTime = unit.toNanos(keepAliveTime);
+        this.threadFactory = threadFactory;
+        this.handler = handler;
+    }
+</code></pre>
+<p>函数的参数含义如下：</p>
+<ul>
+<li>corePoolSize: 指定了线程池中的线程数量。</li>
+<li>maximumPoolSize:指定了线程池中的最大线程数。</li>
+<li>keepAliveTime: 当线程池线程数量超过corePoolSize时，多余的空闲线程的存活时间，即超过corePoolSize的空闲线程，在多长时间内会被销毁。</li>
+<li>unit: keepAliveTime的单位。</li>
+<li>workQueue: 任务队列，被提交但尚未被执行的任务</li>
+<li>threadFactory: 线程工厂，用于创建线程，一般用默认的即可。</li>
+<li>handler: 拒绝策略。当任务太多来不及处理时，如何拒绝任务。</li>
+</ul>
+<p>参数workQueue指被提交但未执行的任务队列，它是一个BlockingQueue接口的对象，仅用于存放Runnable对象。根据队列功能分类，在ThreadPoolExecutor类的构造函数中可使用以下几种BlockingQueue接口：</p>
+<ul>
+<li>
+<p>直接提交的队列：该功能由SynchronousQueue对象提供。SynchronousQueue是一个特殊的BlockingQueue。SynchronousQueue没有容量，每一个插入操作都要等待一个相应的删除操作，反之，每一个删除操作都要等待对于的插入操作。如果使用SynchronousQueue，则提交的任务不会被真实地被保存，而总是将新任务提交给线程执行，如果没有空闲的线程，则尝试创建新的线程。如果线程数量已经达到最大值，则执行拒绝策略。因此，使用SynchronousQueue队列，通常要设置很大的maximumPoolSize值，否则很容易执行拒绝策略。</p>
+</li>
+<li>
+<p>有界的任务队列：有界的任务队列可以使用ArrayBlockingQueue类实现。ArrayBlockingQueue类的构造器必须带一个容量参数，表示该队列的最大容量：</p>
+<pre><code class="language-java">    public ArrayBlockingQueue(int capacity) 
+</code></pre>
+</li>
+<li>
+<p>当使用有界的任务队列时，若有新的任务需要执行，如果线程池的实际线程数小于corePoolSize，则会优先创建新的线程，若大于corePoolSize，则会将新任务加入等待队列。若等待队列已满，无法加入。则在总线程数不大于maximum Pool Size的前提下，创建新的线程执行任务。若大于maximumPoolSize，则执行拒绝策略。可见，有界队列仅当在任务队列装满时，才可能将线程数提升到corePoolSize以上，换言之，除非系统非常繁忙，否则要确保核心线程数维持在corePoolSize。</p>
+</li>
+<li>
+<p>无界的任务队列：无界的任务队列可以通过LinkedBlockingQueue类实现，与有界队列相比，除非系统资源耗尽，否则无界队列不存在任务入队列失败的情况。当有新的任务到来，系统的线程数小于corePoolSize时，线程池会生成新的线程执行任务，但当系统的线程数达到corePoolSize时后，则不会再增加了。若后续仍有新的任务加入，而又没有空闲的线程资源，则任务直接进入队列等待。若任务创建和处理的速度差异很大，无界队列会保持很快速增长，直到耗尽系统内存。</p>
+</li>
+<li>
+<p>优先任务队列：任务优先队列是待有执行优先级的队列。它通过PriorityBlockingQueue类实现，可以控制任务的执行先后顺序，它是一个特殊的无界队列。无论是有界队列ArrayBlockingQueue类，还是未指定大小的无界队列LinkedBlockingQueue类都是按照先进先出算法处理任务的，而PriorityBlockingQueue类则可以根据任务自身的优先级顺序先后执行，在确保系统性能的同时，也有很好的质量保证（总是确保高优先级的任务执行）。</p>
+<blockquote>
+<p>再来看看newFixedThreadPool()方法的实现，它返回了一个corePoolSize和maximumPoolSize大小一样的，并且使用了LinkedBlockingQueue任务队列的线程池。因为对于固定大小的线程池而言，不存在线程数量的动态变化，因此corePoolSize和maximumPoolSize可以相等。同时，它使用LinkedBlockingQueue无界任务队列的，当任务提交比较频繁的情况，很容易耗尽系统内存资源。</p>
+<p>newSingleThreadExecutor()方法返回的单线程线程池，是newFixedThreadPool()方法的一种退化，只是简单的将线程池线程数量设为1。</p>
+<p>newCachedThreadPool()方法返回corePoolSize为0，maximumPoolSize无穷大的线程池，这意味着在没有任务时，该线程池内无线程，而当任务被提交时，该线程池会使用空闲的线程执行任务，若无空闲线程，则将任务加入SynchronousQueue队列，而SynchronousQueue队列是一种直接提交的队列。它总会迫使线程池增加新的线程执行任务。当任务执行完毕后，由于corePoolSize为0，因此空闲线程又会在指定时间内(60秒)被回收。</p>
+<p>对于newCachedThreadPool()方法，如果同时有大量的任务被提交，而任务的执行又不那么快时，那么系统便会开启等量的线程处理，那么很快就会耗尽系统资源。</p>
+<p><em><strong>注意：使用自定义线程池时，要根据应用的具体情况，选择合适的并发队列作为任务的缓冲。当线程资源紧张时，不同的并发队列对系统行为和性能的影响均不同。</strong></em></p>
+</blockquote>
+<p>ThreadPoolExecutor线程池的核心调度代码：</p>
+<pre><code class="language-java">    public void execute(Runnable command) {
+        if (command == null)
+            throw new NullPointerException();
+        /*
+         * Proceed in 3 steps:
+         *
+         * 1. If fewer than corePoolSize threads are running, try to
+         * start a new thread with the given command as its first
+         * task.  The call to addWorker atomically checks runState and
+         * workerCount, and so prevents false alarms that would add
+         * threads when it shouldn't, by returning false.
+         *
+         * 2. If a task can be successfully queued, then we still need
+         * to double-check whether we should have added a thread
+         * (because existing ones died since last checking) or that
+         * the pool shut down since entry into this method. So we
+         * recheck state and if necessary roll back the enqueuing if
+         * stopped, or start a new thread if there are none.
+         *
+         * 3. If we cannot queue task, then we try to add a new
+         * thread.  If it fails, we know we are shut down or saturated
+         * and so reject the task.
+         */
+        int c = ctl.get();
+        if (workerCountOf(c) &lt; corePoolSize) {
+            if (addWorker(command, true))
+                return;
+            c = ctl.get();
+        }
+        if (isRunning(c) &amp;&amp; workQueue.offer(command)) {
+            int recheck = ctl.get();
+            if (! isRunning(recheck) &amp;&amp; remove(command))
+                reject(command);
+            else if (workerCountOf(recheck) == 0)
+                addWorker(null, false);
+        }
+        else if (!addWorker(command, false))
+            reject(command);
+    }
+</code></pre>
+<p>25行的wokerCountOf()函数获取当前线程池的线程总数，当线程总数小于corePoolSize核心线程数时，会将任务通过addWorker()方法直接调度执行。否则，将在第30行workQueue.offer()进入等待队列，如果进入等待队列失败（比如有界队列到达了上限，或者使用了SynchronousQueue类），则会执行37行，直接将任务提交给线程池执行，如果当前线程数已经达到了maxumum'PoolSize，则提交失败，则执行第38行的拒绝策略。</p>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/ThreadPoolExecutor%E6%A0%B8%E5%BF%83%E8%B0%83%E5%BA%A6%E9%80%BB%E8%BE%91.png" alt="" loading="lazy"></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>拒绝策略</p>
+<ol>
+<li>
+<p>ThreadPoolExecutor类的最后一个参数指定了拒绝策略。也就是当任务数量超过系统实际承载能力时，就要用到拒绝策略了。拒绝策略也可以说是系统超负荷运载的补救措施，通常由于压力太大而引起的，也就是线程池中的线程已经用完了，无法为新的任务服务，同时，等待队列中已经排满了，再也放不下新任务了。</p>
+</li>
+<li>
+<p>JDK内置了四种拒绝策略：</p>
+<pre><code class="language-java">public static class AbortPolicy implements RejectedExecutionHandler {
+    /**
+     * Creates an {@code AbortPolicy}.
+     */
+    public AbortPolicy() { }
+
+    /**
+     * Always throws RejectedExecutionException.
+     *
+     * @param r the runnable task requested to be executed
+     * @param e the executor attempting to execute this task
+     * @throws RejectedExecutionException always
+     */
+    public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        throw new RejectedExecutionException(&quot;Task &quot; + r.toString() +
+                                             &quot; rejected from &quot; +
+                                             e.toString());
+    }
+}
+
+    /**
+     * A handler for rejected tasks that runs the rejected task
+     * directly in the calling thread of the {@code execute} method,
+     * unless the executor has been shut down, in which case the task
+     * is discarded.
+     */
+    public static class CallerRunsPolicy implements RejectedExecutionHandler {
+        /**
+         * Creates a {@code CallerRunsPolicy}.
+         */
+        public CallerRunsPolicy() { }
+
+        /**
+         * Executes task r in the caller's thread, unless the executor
+         * has been shut down, in which case the task is discarded.
+         *
+         * @param r the runnable task requested to be executed
+         * @param e the executor attempting to execute this task
+         */
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+            if (!e.isShutdown()) {
+                r.run();
+            }
+        }
+    }
+
+    /**
+     * A handler for rejected tasks that discards the oldest unhandled
+     * request and then retries {@code execute}, unless the executor
+     * is shut down, in which case the task is discarded.
+     */
+    public static class DiscardOldestPolicy implements RejectedExecutionHandler {
+        /**
+         * Creates a {@code DiscardOldestPolicy} for the given executor.
+         */
+        public DiscardOldestPolicy() { }
+
+        /**
+         * Obtains and ignores the next task that the executor
+         * would otherwise execute, if one is immediately available,
+         * and then retries execution of task r, unless the executor
+         * is shut down, in which case task r is instead discarded.
+         *
+         * @param r the runnable task requested to be executed
+         * @param e the executor attempting to execute this task
+         */
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+            if (!e.isShutdown()) {
+                e.getQueue().poll();
+                e.execute(r);
+            }
+        }
+    }
+
+    /**
+     * A handler for rejected tasks that silently discards the
+     * rejected task.
+     */
+    public static class DiscardPolicy implements RejectedExecutionHandler {
+        /**
+         * Creates a {@code DiscardPolicy}.
+         */
+        public DiscardPolicy() { }
+
+        /**
+         * Does nothing, which has the effect of discarding task r.
+         *
+         * @param r the runnable task requested to be executed
+         * @param e the executor attempting to execute this task
+         */
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        }
+    }
+
+
+    private static class RejectHandler implements RejectedExecutionHandler {
+        @Override
+        public void rejectedExecution(Runnable r,
+                java.util.concurrent.ThreadPoolExecutor executor) {
+            throw new RejectedExecutionException();
+        }
+
+    }
+</code></pre>
+</li>
+</ol>
+<ul>
+<li>AbortPolicy 策略：该策略会直接抛出异常，阻止系统正常工作。</li>
+<li>CallerRunsPolicy策略： 只要线程池未关闭，该策略直接在调用者线程中，运行当前被丢弃的任务。显然这样做不会真的丢弃任务，但是，任务提交线程的性能极有可能会急剧下降。</li>
+<li>DiscardOldestPolicy策略：该策略将丢弃最老的一个请求，也就是即将被被执行的一个任务，并尝试再次提交当前任务。</li>
+<li>DiscardPolicy策略：该策略默默地丢弃无法处理的任务，不予任何处理。</li>
+</ul>
+<p>以上策略均实现了RejectExecutionHandler接口，若内置拒绝策略无法满足需求，可以自己扩展RejectExectionHandler接口。</p>
+<pre><code class="language-java">/**
+ * A handler for tasks that cannot be executed by a {@link ThreadPoolExecutor}.
+ *
+ * @since 1.5
+ * @author Doug Lea
+ */
+public interface RejectedExecutionHandler {
+
+    /**
+     * Method that may be invoked by a {@link ThreadPoolExecutor} when
+     * {@link ThreadPoolExecutor#execute execute} cannot accept a
+     * task.  This may occur when no more threads or queue slots are
+     * available because their bounds would be exceeded, or upon
+     * shutdown of the Executor.
+     *
+     * &lt;p&gt;In the absence of other alternatives, the method may throw
+     * an unchecked {@link RejectedExecutionException}, which will be
+     * propagated to the caller of {@code execute}.
+     *
+     * @param r the runnable task requested to be executed
+     * @param executor the executor attempting to execute this task
+     * @throws RejectedExecutionException if there is no remedy
+     */
+    void rejectedExecution(Runnable r, ThreadPoolExecutor executor);
+}
+</code></pre>
+<p>参数r为请求执行的任务，executor为当前的线程池。</p>
+<pre><code class="language-java">import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 线程池拒绝策略
+ * @author Administrator
+ *
+ */
+public class RejectThreadPoolDemo {
+
+	public static class MyTask implements Runnable{
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			System.out.println(System.currentTimeMillis() + &quot;:Thread ID:&quot; +Thread.currentThread().getId());
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	public static void main(String[] args) throws InterruptedException {
+		MyTask task = new MyTask();
+		ExecutorService eService = new ThreadPoolExecutor(5,5,0L,TimeUnit.MILLISECONDS,
+				new LinkedBlockingQueue&lt;Runnable&gt;(10),
+				Executors.defaultThreadFactory(),
+				new RejectedExecutionHandler() {
+					
+					@Override
+					public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+						// TODO Auto-generated method stub
+						System.out.println(r.toString() + &quot; is discard&quot;);
+					}
+				});
+		for (int i = 0; i &lt; Integer.MAX_VALUE; i++) {
+			eService.submit(task);
+			Thread.sleep(10);
+		}
+	}
+	
+}
+</code></pre>
+<p>33-43行定义了一个线程池。5个常驻线程，并且最大线程也是五个，这和固定大小的线程池</p>
+</li>
+</ol>
 
               </div>
               <div class="toc-container">
