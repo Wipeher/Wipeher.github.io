@@ -3,7 +3,7 @@
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>JDK 并发包 | Gridea</title>
-<link rel="shortcut icon" href="https://Wipeher.github.io/favicon.ico?v=1591344641070">
+<link rel="shortcut icon" href="https://Wipeher.github.io/favicon.ico?v=1591715281972">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://Wipeher.github.io/styles/main.css">
 <link rel="alternate" type="application/atom+xml" title="JDK 并发包 | Gridea - Atom Feed" href="https://Wipeher.github.io/atom.xml">
@@ -28,7 +28,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://Wipeher.github.io">
-  <img class="avatar" src="https://Wipeher.github.io/images/avatar.png?v=1591344641070" alt="">
+  <img class="avatar" src="https://Wipeher.github.io/images/avatar.png?v=1591715281972" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -88,7 +88,7 @@
                 2020-06-01
               </span>
               <span>
-                31 min read
+                55 min read
               </span>
               
                 <a href="https://Wipeher.github.io/tag/nPT-jTz-p/" class="post-tag">
@@ -371,7 +371,7 @@ public class RateLimiterDemo {
 <p>所以线程的使用应该是有策略性的，对线程的使用应该加以控制。</p>
 <p>线程池的登场也是如此。即是对线程的复用。</p>
 </blockquote>
-<p>JDK对线程的支持</p>
+<h4 id="jdk对线程的支持">JDK对线程的支持</h4>
 <blockquote>
 <p>Executor类库，本质就是一个线程池，如图</p>
 </blockquote>
@@ -856,7 +856,11 @@ public class ScheduledExecutorServiceDemo {
 <li>DiscardOldestPolicy策略：该策略将丢弃最老的一个请求，也就是即将被被执行的一个任务，并尝试再次提交当前任务。</li>
 <li>DiscardPolicy策略：该策略默默地丢弃无法处理的任务，不予任何处理。</li>
 </ul>
+</li>
+</ol>
+<p>3.自定义策略</p>
 <p>以上策略均实现了RejectExecutionHandler接口，若内置拒绝策略无法满足需求，可以自己扩展RejectExectionHandler接口。</p>
+<p>​</p>
 <pre><code class="language-java">/**
  * A handler for tasks that cannot be executed by a {@link ThreadPoolExecutor}.
  *
@@ -935,7 +939,671 @@ public class RejectThreadPoolDemo {
 	
 }
 </code></pre>
-<p>33-43行定义了一个线程池。5个常驻线程，并且最大线程也是五个，这和固定大小的线程池</p>
+<p>33-43行定义了一个线程池。5个常驻线程，并且最大线程也是五个，这和固定大小的线程池一样的。但是它却拥有一个只有10个容量的等待队列。不能使用无界队列是因为在任务量极大的情况下，内存可能会被大量占用。我们自定义的策略并没有抛出异常，因为任务提交端可能没有处理。我们会将任务丢弃，并且打印其信息。上述代码中，执行时间是100毫秒。可能会导致大量的任务被直接丢弃。</p>
+<pre><code class="language-java">1591590965836:Thread ID:21
+1591590965845:Thread ID:22
+1591590965855:Thread ID:23
+1591590965865:Thread ID:24
+1591590965875:Thread ID:25
+1591590965936:Thread ID:21
+1591590965945:Thread ID:22
+1591590965955:Thread ID:23
+1591590965965:Thread ID:24
+1591590965975:Thread ID:25
+1591590966036:Thread ID:21
+java.util.concurrent.FutureTask@6a38e57f[Not completed, task = java.util.concurrent.Executors$RunnableAdapter@3caeaf62[Wrapped task = test.day01.thread.concurrent.RejectThreadPoolDemo$MyTask@e6ea0c6]] is discard
+1591590966045:Thread ID:22
+1591590966055:Thread ID:23
+1591590966065:Thread ID:24
+1591590966075:Thread ID:25
+java.util.concurrent.FutureTask@1c6b6478[Not completed, task = java.util.concurrent.Executors$RunnableAdapter@5577140b[Wrapped task = test.day01.thread.concurrent.RejectThreadPoolDemo$MyTask@e6ea0c6]] is discard
+java.util.concurrent.FutureTask@4ac68d3e[Not completed, task = java.util.concurrent.Executors$RunnableAdapter@67f89fa3[Wrapped task = test.day01.thread.concurrent.RejectThreadPoolDemo$MyTask@e6ea0c6]] is discard
+java.util.concurrent.FutureTask@6073f712[Not completed, task = java.util.concurrent.Executors$RunnableAdapter@277c0f21[Wrapped task = test.day01.thread.concurrent.RejectThreadPoolDemo$MyTask@e6ea0c6]] is discard
+java.util.concurrent.FutureTask@3d04a311[Not completed, task = java.util.concurrent.Executors$RunnableAdapter@43556938[Wrapped task = test.day01.thread.concurrent.RejectThreadPoolDemo$MyTask@e6ea0c6]] is discard
+java.util.concurrent.FutureTask@5f205aa[Not completed, task = java.util.concurrent.Executors$RunnableAdapter@7a46a697[Wrapped task = test.day01.thread.concurrent.RejectThreadPoolDemo$MyTask@e6ea0c6]] is discard
+</code></pre>
+<ul>
+<li></li>
+</ul>
+<h4 id="对jdk线程池的扩展">对JDK线程池的扩展</h4>
+<ol start="6">
+<li>
+<p>自定义线程创建：ThreadFactory</p>
+<p>ThreadFactory是一个接口：只有一个创建线程的方法。</p>
+<pre><code class="language-java">Thread newThread(Runnable r);
+</code></pre>
+<p>当线程池需要新建线程时，就会调用这个方法。</p>
+<pre><code class="language-java">import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import test.day01.thread.concurrent.RejectThreadPoolDemo.MyTask;
+
+public class ThreadFactoryDemo {
+
+	public static void main(String[] args) throws InterruptedException {
+		MyTask myTask = new MyTask();
+		ExecutorService executorService = new ThreadPoolExecutor(
+				5, 5, 0L, TimeUnit.MILLISECONDS, new SynchronousQueue&lt;Runnable&gt;(),
+				new ThreadFactory() {
+					
+					@Override
+					public Thread newThread(Runnable r) {
+						// TODO Auto-generated method stub
+						Thread thread = new Thread(r);
+						thread.setDaemon(true);
+						System.out.println(&quot;create &quot; + thread);
+						return thread;
+					}
+				});
+		for (int i = 0; i &lt; 5; i++) {
+			executorService.submit(myTask);
+		}
+		Thread.sleep(2000);
+	}
+	
+}
+</code></pre>
+<p>运行结果：</p>
+<pre><code class="language-java">create Thread[Thread-0,5,main]
+create Thread[Thread-1,5,main]
+create Thread[Thread-2,5,main]
+create Thread[Thread-3,5,main]
+1591594503632:Thread ID:21
+1591594503632:Thread ID:23
+1591594503632:Thread ID:22
+create Thread[Thread-4,5,main]
+1591594503632:Thread ID:24
+1591594503633:Thread ID:25
+
+</code></pre>
+</li>
+<li>
+<p>扩展线程池</p>
+<ol>
+<li>
+<p>当需要对JDK自定义的线程池进行扩展时，可以对ThreadPoolExecutor扩展，提供了beforeExecute()、afterExecute()和terminated()三个接口来对线程池进行控制。</p>
+<ol>
+<li>
+<p>runWorker()方法的内部实现</p>
+<pre><code class="language-java">    final void runWorker(Worker w) {
+        Thread wt = Thread.currentThread();
+        Runnable task = w.firstTask;
+        w.firstTask = null;
+        w.unlock(); // allow interrupts
+        boolean completedAbruptly = true;
+        try {
+            while (task != null || (task = getTask()) != null) {
+                w.lock();
+                // If pool is stopping, ensure thread is interrupted;
+                // if not, ensure thread is not interrupted.  This
+                // requires a recheck in second case to deal with
+                // shutdownNow race while clearing interrupt
+                if ((runStateAtLeast(ctl.get(), STOP) ||
+                     (Thread.interrupted() &amp;&amp;
+                      runStateAtLeast(ctl.get(), STOP))) &amp;&amp;
+                    !wt.isInterrupted())
+                    wt.interrupt();
+                try {
+                    beforeExecute(wt, task);
+                    try {
+                        task.run();
+                        afterExecute(task, null);
+                    } catch (Throwable ex) {
+                        afterExecute(task, ex);
+                        throw ex;
+                    }
+                } finally {
+                    task = null;
+                    w.completedTasks++;
+                    w.unlock();
+                }
+            }
+            completedAbruptly = false;
+        } finally {
+            processWorkerExit(w, completedAbruptly);
+        }
+    }
+</code></pre>
+<p>ThreadPoolExecutor.Worker是ThreadPoolExecutor的内部类，它实现了Runnable接口。ThreadPoolExecutor线程池中的工作线程也正是Worker实例。Worker.run方法会调用ThreadPoolExecutor.runWorker(Worker w)实现每一个工作线程固有的工作。</p>
+<p>在默认的ThreadPoolExecutor实现中，提供了空的beforeExecute()和afterExecute()两个接口实现。在实际应用中，可以对其扩展来实现对线程池运行状态的跟踪，输出一些有用的调试信息，以帮助系统故障诊断。</p>
+<pre><code class="language-java">import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+public class ExtThreadPool {
+	public static class MyTask implements Runnable{
+		public String name;
+		
+		public MyTask(String name) {
+			this.name = name;
+		}
+		
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			System.out.println(&quot;正在执行&quot; + &quot;:Thread ID:&quot; + Thread.currentThread().getId() + 
+					&quot;,Task Name=&quot; + name);
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void main(String[] args) throws InterruptedException {
+		ExecutorService executorService = new ThreadPoolExecutor(5, 5, 0L, TimeUnit.MICROSECONDS, 
+				new LinkedBlockingQueue&lt;Runnable&gt;()) {
+			@Override
+			protected void beforeExecute(Thread t, Runnable r) {
+				// TODO Auto-generated method stub
+				System.out.println(&quot;准备执行： &quot; + ((MyTask)r).name );
+			}
+			
+			@Override
+			protected void afterExecute(Runnable r, Throwable t) {
+				// TODO Auto-generated method stub
+				//super.afterExecute(r, t);
+				System.out.println(&quot;执行完成： &quot; + ((MyTask)r).name);
+			}
+			
+			@Override
+			protected void terminated() {
+				// TODO Auto-generated method stub
+				//super.terminated();
+				System.out.println(&quot;线程池退出&quot;);
+			}
+			
+		};
+		
+		for (int i = 0; i &lt; 5; i++) {
+			MyTask task = new MyTask(&quot;Task-GETM-&quot; + i);
+			executorService.submit(task);
+			Thread.sleep(10);
+		}
+		executorService.shutdown();
+		
+	}
+}
+</code></pre>
+<p>第29-51行扩展了原有的线程池，实现了beforeExecute()、afterExecute()和terminated()三个方法。这三个方法分别用于记录一个任务的开始、结束和整个线程池的退出。最后53-58行向线程池提交了5个任务，第55行使用了execute()提交任务。而之前一直都是使用submit()提交。</p>
+<p>最后应该使用shutdown()方法关闭线程池。如果当前有任务，shutdown()不会马上暴力中止所有任务，它会等待所有任务完成后，再关闭线程池，但它不会等待所有的线程执行完毕后再返回。因此，可以简单理解shutdown()方法只是发送了一个关闭信号而已。但在shutdown()方法执行后，这个线程池就不能接受其他新的任务了。</p>
+<p>运行结果：</p>
+<pre><code class="language-java">准备执行： Task-GETM-0
+正在执行:Thread ID:21,Task Name=Task-GETM-0
+准备执行： Task-GETM-1
+正在执行:Thread ID:22,Task Name=Task-GETM-1
+准备执行： Task-GETM-2
+正在执行:Thread ID:23,Task Name=Task-GETM-2
+准备执行： Task-GETM-3
+正在执行:Thread ID:24,Task Name=Task-GETM-3
+准备执行： Task-GETM-4
+正在执行:Thread ID:25,Task Name=Task-GETM-4
+执行完成： Task-GETM-0
+执行完成： Task-GETM-1
+执行完成： Task-GETM-2
+执行完成： Task-GETM-3
+执行完成： Task-GETM-4
+线程池退出
+
+</code></pre>
+<p>可以看到，所有任务的执行前，执行后的时间点及任务的名字都已经可以捕获了。这对于应用程序调试和诊断是有帮助的。</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h4 id="线程池的优化和堆栈错误异常">线程池的优化和堆栈错误异常</h4>
+<ol start="8">
+<li>
+<p>合理的选择：优化线程池数量</p>
+<ol>
+<li>
+<p>线程池的大小对系统的性能有一定的影响。过大或者过小的线程数量都无法发挥最优的系统性能，但是线程池大小的确定也不需要做的非常精确，因为只要避免极大和极小两种情况，线程池的大小对系统的性能并不会影响太大。一般来说，确定线程池的大小需要考虑CPU数量、内存大小等因素。</p>
+</li>
+<li>
+<p>线程池大小的公式：</p>
+<p>Ncpu = CPU的数量</p>
+<p>Ucpu=目标CPU的使用率，0&lt;= Ucpu&lt;=1</p>
+<p>W/C=等待时间与计算时间的比率</p>
+<p>为保持处理器达到期望的使用率，最优的线程池的大小等于：</p>
+<p>Nthreads = Ncpu* Ucpu *(1 + W/C)</p>
+</li>
+<li>
+<p>在java中，可以获取CPU数量。</p>
+</li>
+</ol>
+<pre><code class="language-java">Runtime.getRuntime().avaliableProcessors()
+</code></pre>
+</li>
+<li>
+<p>在线程池中寻找堆栈</p>
+<ol>
+<li>
+<p>多线程中常见的幽灵错误，使用了线程池则更常见</p>
+<pre><code class="language-java">import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+public class DivTsk implements Runnable{
+	
+	int a,b;
+	public DivTsk(int a, int b) {
+		super();
+		this.a = a;
+		this.b = b;
+	}
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		double re = a/b;
+		System.out.println(re);
+	}
+	
+	public static void main(String[] args) {
+		ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(
+				0, Integer.MAX_VALUE, 0L, TimeUnit.MICROSECONDS, new SynchronousQueue&lt;Runnable&gt;());
+		
+		for (int i = 0; i &lt; 5; i++) {
+			poolExecutor.submit(new DivTsk(100, i));
+		}
+	}
+	
+}
+</code></pre>
+<p>执行上述代码后，应该有五个输出。</p>
+<pre><code class="language-java">100.0
+33.0
+25.0
+50.0
+
+</code></pre>
+<p>但是最后只出现了四组输出，也就是说程序楼算了一组数据，更不幸的是，程序没有任何日志。</p>
+<p>使用线程池虽然是件好事，但是很有可能会吃掉程序的异常。所以，程序最好是有异常堆栈信息。</p>
+</li>
+<li>
+<p>要使程序有异常堆栈信息，最简单的是放弃使用submit()方法。改用execute()方法，将上述的任务提交代码改成：</p>
+<pre><code>poolExecutor.execute(new DivTsk(100, i));
+</code></pre>
+<p>或者使用改造过的submit（）方法()：</p>
+<pre><code class="language-java">Future future = poolExecutor.submit(new DivTsk(100, i));
+future.get();
+</code></pre>
+<p>上面两种方法都可以得到部分堆栈信息，如下所示：</p>
+<pre><code class="language-java">Exception in thread &quot;main&quot; java.util.concurrent.ExecutionException: java.lang.ArithmeticException: / by zero
+	at java.base/java.util.concurrent.FutureTask.report(FutureTask.java:122)
+	at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:191)
+	at test.day01.thread.concurrent.DivTsk.main(DivTsk.java:32)
+Caused by: java.lang.ArithmeticException: / by zero
+	at test.day01.thread.concurrent.DivTsk.run(DivTsk.java:20)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+	at java.base/java.lang.Thread.run(Thread.java:834)
+
+</code></pre>
+<p>注意了，这里指的是部分堆栈，因为从这两个异常堆栈中我们只能知道异常是在哪里抛出的，但是我们更希望的是能得到一个更重要的信息。就是这个任务到底在哪里提交的。而任务的提交位置，早就被线程池完全淹没了。顺着堆栈，我们只能最多找到线程池的调度流程，而这对我们几乎是没有价值的。</p>
+<p>扩展ThreadPoolExecutor线程池，让它在调度任务之前，先保存一下提交任务线程的堆栈信息：</p>
+<pre><code class="language-java">import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+public class TraceThreadPoolExecutor extends ThreadPoolExecutor{
+
+	public TraceThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+			BlockingQueue&lt;Runnable&gt; workQueue) {
+		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
+		// TODO Auto-generated constructor stub
+	}
+	
+	@Override
+	public void execute(Runnable command) {
+		// TODO Auto-generated method stub
+		super.execute(wrap(command, clientTrace(), Thread.currentThread().getName()));
+	} 
+	
+	
+	@Override
+	public Future&lt;?&gt; submit(Runnable task) {
+		// TODO Auto-generated method stub
+		return super.submit(wrap(task, clientTrace(), Thread.currentThread().getName()));
+	}
+	
+	private Exception clientTrace() {
+		return new Exception(&quot;Client stack trace&quot;);
+	}
+	
+	private Runnable wrap(final Runnable task,final Exception clientStack,String clientThreadName) {
+		return new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try {
+					task.run();
+				} catch (Exception e) {
+					// TODO: handle exception
+					clientStack.printStackTrace();
+					throw e;
+				}
+			}
+		};
+	}
+}
+</code></pre>
+<p>31行代码中，wrap()方法的第2个参数为一个异常，里面保存着提交任务的线程的堆栈信息。该方法将我们传入的Runnable任务进行一层包装，使之能处理异常信息。当发生异常时，这个异常能被打印。</p>
+<pre><code class="language-java">	public static void main(String[] args) {
+		ThreadPoolExecutor poolExecutor = new TraceThreadPoolExecutor(
+				0, Integer.MAX_VALUE, 0L, TimeUnit.MICROSECONDS, new SynchronousQueue&lt;Runnable&gt;());
+		
+		/**
+		 * 堆栈错误可以看到是在哪里提交的任务
+		 */
+		for (int i = 0; i &lt; 5; i++) {
+			poolExecutor.execute(new DivTsk(100, i));
+		}
+	}
+</code></pre>
+<p>运行结果：</p>
+<pre><code class="language-java">java.lang.Exception: Client stack trace
+	at test.day01.thread.concurrent.TraceThreadPoolExecutor.clientTrace(TraceThreadPoolExecutor.java:31)
+	at test.day01.thread.concurrent.TraceThreadPoolExecutor.execute(TraceThreadPoolExecutor.java:20)
+	at test.day01.thread.concurrent.TraceThreadPoolExecutor.main(TraceThreadPoolExecutor.java:59)
+Exception in thread &quot;pool-1-thread-1&quot; java.lang.ArithmeticException: / by zero
+	at test.day01.thread.concurrent.DivTsk.run(DivTsk.java:20)
+	at test.day01.thread.concurrent.TraceThreadPoolExecutor$1.run(TraceThreadPoolExecutor.java:41)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+	at java.base/java.lang.Thread.run(Thread.java:834)
+100.0
+25.0
+33.0
+50.0
+
+</code></pre>
+<p>此时，不仅可以得到异常发生的Runnable实现内的信息，也知道了这个任务是在哪里提交的。</p>
+</li>
+</ol>
+</li>
+<li>
+<p>分而治之：Fork/Join框架</p>
+<ol>
+<li>
+<p>“分而治之”是一个处理大量数据的方法。著名的MapReduce也是取了分而治之的思想。Fork一词的原始含义是吃饭的叉子，也有分叉的意思。</p>
+</li>
+<li>
+<p>join()方法是等待当前线程等待调用线程执行完。</p>
+</li>
+<li>
+<p>在实际过程中，如果毫无顾忌的使用fork()方法开启线程进行处理，那么很有可能导致系统开启过多的线程而严重影响性能。所以，在JDK中，给出了一个ForkJoinPool线程池，对于Fork()方法并不急着开启线程，而是提交给ForkJoinPool线程池进行处理。</p>
+</li>
+<li>
+<p>由于线程池的优化，提交的任务和线程数量并不是一对一的关系，在绝大多数情况下，一个物理线程实际上是要处理多个逻辑任务的。因此，每个线程必然需要拥有一个任务队列。因此，在实际执行过程中，可能遇到这么一种情况，线程A已经把自己的任务都执行完了，而线程B还有一堆任务需要执行，此时，线程A就会”帮助“线程B，从线程B的任务队列中拿一个任务过来处理，尽可能地达到平衡。</p>
+</li>
+<li>
+<p>当一个线程试图“帮助”其他线程时，总是从任务队列的底部开始获取数据，而线程试图执行自己的任务时，则是从相反的顶部开始获取数据。因此，这种方式有助于避免数据竞争。</p>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/%E4%BA%92%E7%9B%B8%E5%B8%AE%E5%8A%A9%E7%9A%84%E7%BA%BF%E7%A8%8B.jpg" alt="" loading="lazy"></figure>
+</li>
+<li>
+<p>ForkJoinPool线程池的一个重要接口：</p>
+<pre><code class="language-java">public &lt;T&gt; ForkJoinTask&lt;T&gt; submit(ForkJoinTask&lt;T&gt; task)
+</code></pre>
+<p>可以向ForkJoinPool线程池提交一个ForkJoinTask任务。所谓ForkJoinTask任务就是支持fork()方法分解及join()方法等待的任务。ForkJoinTask任务有两个重要的子类，RecursiveAction类和RecursiveTask类。它们分别表示没有返回值的任务和可以携带返回值得任务。</p>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/RecursiveTask%E5%92%8CRecursiveAction%E7%B1%BB.jpg" alt="" loading="lazy"></figure>
+<p>撸代码：</p>
+<pre><code class="language-java">import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveTask;
+
+public class CountTask extends RecursiveTask&lt;Long&gt; {
+
+	private static final long serialVersionUID = 1L;
+	private static final int THRESHOLD = 10000;
+	private long start;
+	private long end;
+	public CountTask(long start, long end) {
+		super();
+		this.start = start;
+		this.end = end;
+	}
+	@Override
+	public Long compute() {
+		long sum = 0;
+		boolean canCompute = (end -start) &lt; THRESHOLD;
+		if (canCompute) {
+			for(long i =start; i &lt;= end;i++) {
+				sum+=i;
+			}
+		}else {
+			//分成100个小任务
+			long step = (start + end)/100;
+			ArrayList&lt;CountTask&gt; subTasks = new ArrayList&lt;CountTask&gt;();
+			long pos =start;
+			for (int i = 0; i &lt; 100; i++) {
+				long lastOne = pos+step;
+				if (lastOne &gt; end) {
+					lastOne = end;
+				}
+				CountTask subTask = new CountTask(pos, lastOne);
+				pos += step+1;
+				subTasks.add(subTask);
+				subTask.fork();
+			}
+			for(CountTask task : subTasks) {
+				sum += task.join();
+			}
+		}
+		return sum;
+	}
+	
+	public static void main(String[] args) {
+		ForkJoinPool forkJoinPool = new ForkJoinPool();
+		CountTask countTask = new CountTask(0, 200000L);
+		ForkJoinTask&lt;Long&gt; result = forkJoinPool.submit(countTask);
+		try {
+			long res =result.get();
+			System.out.println(&quot;sum= &quot; + res);
+		} catch (InterruptedException e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+}
+</code></pre>
+<p>由于计算数列的和必然是需要函数返回值的，因此选择RecursiveTask作为任务的模型。</p>
+<p>49行建立了Fo'r'k'Join'Pool线程池。在第50行构造一个1到200000求和的任务。51行提交给线程池，线程池会返回一个携带结果的任务。通过get()方法可以得到最终结果(第53行)。如果在执行get()方法时任务没有结束，那么主线程就会在get()方法时等待。</p>
+<p>CountTask继承自RecursiveTask类，可以携带返回值。这里的返回值类型设置为long型。第10行定义的THRESHOLD设置了任务分解的规模，也就是如果需要求和的总数大于THRESHOLD个，那么任务就需要再次分解，否则就可以直接执行，这个判断逻辑在第22行有体现，如果任务可以直接执行，那么直接进行求和。否则，对任务再次分解，每次分解时，简单地将原有任务划分成100个等规模的小任务，并使用fork()方法提交子任务。之后，等待所有子任务结束，并将结果再次求和。</p>
+<blockquote>
+<p>在使用Fork/Join框架时要注意：如果任务的划分层次越多，一直得不到返回，那么可能出现两种情况，第一，系统内的线程数量越积越多，导致性能急剧下降。第二，函数的调用层次变多，最终导致</p>
+<p>此外，ForkJoin线程池使用一个无锁的栈来管理空闲线程。如果一个工作线程暂时取不到可用的任务，则可能会被挂起，挂起的线程将会被压入由线程池维护的栈中。待将来任务可用时，再从栈中唤醒这些线程。</p>
+</blockquote>
+</li>
+</ol>
+</li>
+<li>
+<p>Guava中对线程池的扩展</p>
+<p>存在MoreExecutors工具类中。</p>
+<ol>
+<li>
+<p>特殊的MoreExecutors中，提供过了一个简单但是非常重要的线程池实现。即DirectExecutor线程池。DirectExecutor线程池很简单，就是将任务放在当前线程中执行。</p>
+<ol>
+<li>
+<p>对线程来说，其技术目的是为了复用线程以提高运行效率，但其业务需求却是去异步执行一段业务指令。任何一个可以运行的Runnabl实例的模块都可以被视为线程池，即使它没有真正创建线程。这样就可以将异步执行和同步执行统一，使用同一的编码风格来处理同步和异步调用。</p>
+</li>
+<li>
+<p>代码：</p>
+<pre><code class="language-java">import java.util.concurrent.Executor;
+
+import com.google.common.util.concurrent.MoreExecutors;
+
+public class GuavaDirectExecutorDemo {
+	public static void main(String[] args) {
+		Executor executor = MoreExecutors.directExecutor();
+		executor.execute(() -&gt; System.out.println(&quot;I am a running in &quot; + Thread.currentThread().getName()));
+	}
+}
+</code></pre>
+<p>运行结果：</p>
+<pre><code class="language-java">I am a running in main
+</code></pre>
+<p>可以看到，这个Runnable接口在主线程中执行。</p>
+<p>注入不同的exceutor的实现，例如使用固定大小线程池替代DirectExecutor，无须修改代码便可以使程序拥有不同的行为，这也正是DirectExecutor的用意所在。</p>
+</li>
+</ol>
+</li>
+<li>
+<p>Daemon线程池</p>
+<p>将普通线程池转换为Daemon线程池的方法。在很多场合，不希望后台线程阻止程序的退出。当系统执行完成后，即使有线程池存在，依然希望进程结束执行。此时，可以使用MoreExecutors.getExitingExecutorService()方法。</p>
+<pre><code>import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+
+import com.google.common.util.concurrent.MoreExecutors;
+
+public class GuavaExitingExecutorDemo {
+	public static void main(String[] args) {
+		ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(2);
+		MoreExecutors.getExitingExecutorService(executor);
+		executor.execute(()-&gt; System.out.println(&quot;I am running in &quot; + Thread.currentThread().getName()));
+	}
+}
+</code></pre>
+<p>运行结果：</p>
+<pre><code class="language-java">I am running in pool-1-thread-1
+</code></pre>
+<p>上述代码输出“I am running in pool-1-thread-1”后，立即退出程序，若不使用MoreExecutors.getExitingExecutorService()方法对executor线程池进行设置，则程序无法正常退出，除非手动关闭executor线程池。</p>
+</li>
+<li>
+<p>对Future模式的扩展</p>
+<ol>
+<li>MoreExecutors中还提供了对Future模式的扩展</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h3 id="jdk的并发容器">JDK的并发容器</h3>
+<pre><code>#### JDK并发集合
+</code></pre>
+<ol>
+<li>
+<p>集合简介：</p>
+<ul>
+<li>ConcurrentHashMap: 这是一个高效的并发HashMap。你可以把它理解为一个线程安全的HashMap。</li>
+<li>CopyOnWriteArrayList: 这是一个List，从名字看就知道它和ArrayList是一族的。在读多写少的场合，这个List的性能非常好，远远优于Vector。</li>
+<li>ConcurrentLinkedQueue：高效的并发队列，使用链表实现。可以看作一个线程安全的LinkedList。</li>
+<li>BlockingQueue：这是一个接口，JDK内部通过链表、数组等方式实现了这个接口表示阻塞队列，非常适合作为数据共享的通道。</li>
+<li>ConcurrentSkipListMap：跳表的实现。这是一个Map，使用跳表的数据结构进行快速查找。</li>
+</ul>
+</li>
+<li>
+<p>除以上并发包中的专有数据结构以外，java.util下的Vector是线程安全的（但是性能很差），另外Collections工具类可以帮助我们将任意集合包装成线程安全的集合。</p>
+</li>
+<li>
+<p>线程安全的HashMap</p>
+<ol>
+<li>
+<p>如果需要一个线程安全的HashMap，可以实施两种方案：</p>
+<ul>
+<li>
+<p>使用Collections.synchronizdMap()方法包装我们的HashMap。</p>
+<pre><code class="language-java">public  static Map m = Collections.synchronizedMap(new HashMap();
+</code></pre>
+</li>
+<li>
+<p>Collections.synchronizedMap()方法会生成一个名为SynchronziedMap的Map。它使用委托，将自己所有的Map相关功能都交给HashMap实现，而自己则主要负责保证线程安全。</p>
+</li>
+<li>
+<p>具体可以参考以下实现。</p>
+<pre><code class="language-java">    private static class SynchronizedMap&lt;K,V&gt;
+        implements Map&lt;K,V&gt;, Serializable {
+            private static final long serialVersionUID = 1978198479659022715L;
+
+            private final Map&lt;K,V&gt; m;     // Backing Map
+            final Object      mutex;        // Object on which to synchronize
+        }
+</code></pre>
+<p>通过mutex实现对这个m的互斥操作，比如，对于Map.get()方法，它的实现如下：</p>
+<pre><code class="language-java">        public V get(Object key) {
+            synchronized (mutex) {return m.get(key);}
+        }
+</code></pre>
+<p>所有其他相关的Map操作都会使用mutex进行同步，从而实现线程安全。</p>
+</li>
+<li>
+<p>虽然这个包装的Map可以满足线程安全的要求，但是它在多线程环境中的性能表现并不算太好，无论是对Map的读取或者写入，都需要获取mutex的锁，这会导致所有对Map的操作全部进入等待状态，直到mutex锁可用。如果并发级别不高，那么一般也够用。但是高并发情况下则需要其他方案。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>并发版的ConcurrentHashMap，它位于java.util.concurrent包下。</p>
+</li>
+</ol>
+</li>
+<li>
+<p>有关List的线程安全</p>
+<ol>
+<li>
+<p>队列、链表之类的数据结构也是极其常用的，几乎所有的应用程序都会与之相关。在Java中，ArrayList和Vector都是用数组作为其内部实现的。两者最大的不同在于Vector是线程安全的，ArrayLsit是线程不安全的。此外，LinkedList使用链表的数据结构实现了List。但是很不幸，LinkedList并不是线程安全的，不过参考前面对HashMap的包装，这里我们也可以使用Collections.synchronizedList()方法来包装任意List:</p>
+<pre><code class="language-java">public static List&lt;String&gt; l = Collections.synchronizedList(new LinkedList&lt;String&gt;());
+</code></pre>
+<p>此时生成的List对象就是线程安全的了。</p>
+</li>
+</ol>
+</li>
+<li>
+<p>高效读写的队列：深度剖析CocurrentLinkedQueue类。</p>
+<ol>
+<li>
+<p>队列Queue也是常用的数据结构之一。在JDK中提供了一个ConcurrentLinkedQueue类用来实现高并发的队列。从名字可以看出来，这个队列使用链表作为其数据结构。</p>
+</li>
+<li>
+<p>作为一个链表，自然需要定义有关链表的结点，在ConcurrentLikedQueue类中，定义的节点如下：</p>
+<pre><code class="language-java">private static class Node&lt;E&gt; {
+	volatile E item;
+    volatile Node&lt;E&gt; next;
+}
+</code></pre>
+<p>其中item是用来表示目标元素的。比如，当列表中存放String时，item就是String类型。字段next表示当前Node的下一个元素，这样每个Node就能连接起来。</p>
+</li>
+<li>
+<p>对Node进行操作时，使用了CAS。</p>
+<pre><code class="language-java">boolean casItem(E cmp , E val){
+	return UNSAFE.compareAndSwapObject(this,itemOffset,cmp ,val);
+}
+
+void lazySetNext(Node&lt;E&gt; val){
+	UNSAFE.putOrderedObject(this,nextOffset,val);
+}
+
+boolean casNext(Node&lt;E&gt; cmp , Node&lt;E&gt; val){
+	return UNSAFE.compareAndSwapObject(this,nextOffset,cmp,val);
+}
+
+</code></pre>
+<p>方法casItem()表示设置当前Node的item值。它需要两个参数，第一参数为期望值，第二个参数为设置目标值。当当前值等于cmp期望值时，就会将目标设置为val。同样casNext()方法也是类似的，但是它用于设置next字段，而不是item字段。</p>
+</li>
+<li>
+<p>ConcurrentLinkedQueue类内部有两个重要的字段，head和tail，分别表示链表的头部和尾部，它们都是Node类型，对于head来说，它永远不会为null，并且通过head以及succ()后继方法一定能完整地遍历整个链表。对于tail来说，它自然应该表示队列的末尾。</p>
+</li>
+<li>
+<p>但是ConcurrentLinkedQueue类的内部实现非常复杂，它允许在允许时链表处于多个不同的状态。以tail为例，一般来说，我们期望tail总是为链表的末尾，但实际上，tail的更新并不是及时的，可能会产生拖延现象，下图显示了插入时tail的更新情况，可以看到tail的更新会产生滞后，并且每次更新会跳跃两个元素。</p>
+</li>
+</ol>
 </li>
 </ol>
 
@@ -960,7 +1628,14 @@ public class RejectThreadPoolDemo {
 <li><a href="#%E5%BE%AA%E7%8E%AF%E6%A0%85%E6%A0%8F-cyclicbarrier">循环栅栏: CyclicBarrier</a></li>
 <li><a href="#%E7%BA%BF%E7%A8%8B%E9%98%BB%E5%A1%9E%E5%B7%A5%E5%85%B7%E7%B1%BBlocksupport">线程阻塞工具类：LockSupport</a></li>
 <li><a href="#guava-%E5%92%8C-ratelimiter%E9%99%90%E6%B5%81">Guava 和 RateLimiter限流</a></li>
-<li><a href="#%E7%BA%BF%E7%A8%8B%E5%A4%8D%E7%94%A8%E7%BA%BF%E7%A8%8B%E6%B1%A0">线程复用：线程池</a></li>
+<li><a href="#%E7%BA%BF%E7%A8%8B%E5%A4%8D%E7%94%A8%E7%BA%BF%E7%A8%8B%E6%B1%A0">线程复用：线程池</a>
+<ul>
+<li><a href="#jdk%E5%AF%B9%E7%BA%BF%E7%A8%8B%E7%9A%84%E6%94%AF%E6%8C%81">JDK对线程的支持</a></li>
+<li><a href="#%E5%AF%B9jdk%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E6%89%A9%E5%B1%95">对JDK线程池的扩展</a></li>
+<li><a href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E4%BC%98%E5%8C%96%E5%92%8C%E5%A0%86%E6%A0%88%E9%94%99%E8%AF%AF%E5%BC%82%E5%B8%B8">线程池的优化和堆栈错误异常</a></li>
+</ul>
+</li>
+<li><a href="#jdk%E7%9A%84%E5%B9%B6%E5%8F%91%E5%AE%B9%E5%99%A8">JDK的并发容器</a></li>
 </ul>
 </li>
 </ul>
