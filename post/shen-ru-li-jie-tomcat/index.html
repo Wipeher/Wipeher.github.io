@@ -1,0 +1,712 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title># 深入理解Tomcat | Gridea</title>
+<link rel="shortcut icon" href="https://Wipeher.github.io/favicon.ico?v=1592924181655">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://Wipeher.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="# 深入理解Tomcat | Gridea - Atom Feed" href="https://Wipeher.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="容器基础
+Web容器是什么？
+本质是一个Http服务器和Servlet容器。
+Tomcat和Jetty本质是一个Servlet容器，为了方便使用，也具有Http服务器的功能。
+早期的Web应用主要用于浏览新闻等静态页面，Http服务器(Ap..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://Wipeher.github.io">
+  <img class="avatar" src="https://Wipeher.github.io/images/avatar.png?v=1592924181655" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              # 深入理解Tomcat
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-06-23
+              </span>
+              <span>
+                23 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="容器基础">容器基础</h2>
+<h3 id="web容器是什么">Web容器是什么？</h3>
+<p>本质是一个Http服务器和Servlet容器。</p>
+<p>Tomcat和Jetty本质是一个Servlet容器，为了方便使用，也具有Http服务器的功能。</p>
+<p>早期的Web应用主要用于浏览新闻等静态页面，Http服务器(Apache,Nginx)向浏览器反馈静态HTML，浏览器负责解析HTML，将结果呈现给用户。</p>
+<p>后来，当网页希望能获取动态结果，因此也需要一些扩展机制能够让Http服务器调用服务端程序。</p>
+<p>此时java推出的Servlet就是服务端的小程序，但是没有main方法，不能独立允许，必须把它部署到Servlet容器中，由容器来实例化和调用Servlet。</p>
+<hr>
+<h3 id="http-协议">HTTP 协议</h3>
+<hr>
+<h3 id="servlet规范和容器">Servlet规范和容器</h3>
+<h2 id="容器架构">容器架构</h2>
+<hr>
+<h3 id="tomcat系统架构">Tomcat系统架构</h3>
+<blockquote>
+<p>Tomcat要实现2个核心功能：</p>
+<ul>
+<li>处理Socket链接，负责网络字节流与Request和Response对象的转化。</li>
+<li>加载和管理Servlet，以及具体处理Request请求。</li>
+</ul>
+<p>连接器和容器。</p>
+</blockquote>
+<h4 id="连接器设计">连接器设计</h4>
+<h4 id="容器的设计">容器的设计</h4>
+<hr>
+<h3 id="tomcat一键式启停">Tomcat一键式启停</h3>
+<hr>
+<h3 id="tomcat的高层们都在负责做什么">Tomcat的“高层们”都在负责做什么</h3>
+<blockquote>
+<p>当通过bin目录下的startup.sh脚本来启动Tomcat时，流程如下图：</p>
+<ol>
+<li>Tomcat本质是一个Java程序。startup.sh会来启动一个jvm来运行Tomcat的启动类Bootstrap</li>
+<li>Bootstrap的主要任务是初始化Tomcat的类加载器，并且创建Catalina。</li>
+<li>Catalina是一个启动类，它通过解析server.xml、创建相应的组件，并调用Server的start方法。</li>
+<li>Server组件的职责就是管理Service组件，它会负责调用Service的start方法。</li>
+<li>Service组件的职责就是管理连接器喝顶层容器Engine，因此它会调用连接器和Engine的start方法。</li>
+</ol>
+</blockquote>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/2020/06/18/20200618113232.jpg" alt="" loading="lazy"></figure>
+<p>可以把Boostrap看成是上帝，它初始化了类加载器，也就是创造万物的工具。</p>
+<p>Tomcat比作是一家公司，那么Catalina应该是公司创始人，因为Catalina负责组件团队，也就是创建Server以及它的子组件。</p>
+<p>Server是公司的CEO，负责管理两个职能部门：一个是对外的市场部，也就是连接器组件；另一个是对内的研发部，也就是容器组件。</p>
+<p>Engine则是研发部经理，因为Engine是顶层的容器组件。</p>
+<blockquote>
+<p>这些启动类或者组件不处理具体请求，它们的任务主要是“管理”，管理下层组件的生命周期，并且给下层组件分配任务，也就是把请求路由到负责“干活儿”的组件。</p>
+</blockquote>
+<p>通过这些“高层”的实现细节，目的是让我们逐步理解Tomcat的工作原理。</p>
+<h4 id="catalina">Catalina</h4>
+<p>Catalina的主要任务就是创建Server，它不是直接new一个Server实例就完事了，而是需要解析server.xml，把server.xml里配置的各种组件--创建出来，接着调用Server组件的init方法和start方法，这样整个Tomcat就启动起来了。</p>
+<p>作为“管理者”，Catalina还需要处理各种“异常”情况，比如当我们通过&quot;Ctrl +C&quot;关闭Tomcat时，Tomcat则必须停止并且清理资源。因此Catalina在JVM中注册一个“关闭钩子”。</p>
+<pre><code class="language-java">public void start(){
+    //1.如果持有的Server实例为空，就解析server。xml创建出来
+    if(getServer() == null){
+        load();
+    }
+    //2.如果创建失败，报错退出
+    if(getServer() == null){
+        log.fatal(sm.getString(&quot;catalina.noServer&quot;));
+        return ;
+    }
+    //3.启动Server
+    try{
+        getServer().start();
+    }catch(LifecycleException e){
+        return ;
+    }
+    
+    //创建并注册关闭钩子
+    if(useShutdownHook){
+        if(shutdownHook == null){
+            shutdownHook = new CatalinaShutdownHook();
+        }
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+    }
+    
+    //用await方法监听停止请求
+    if(await){
+        await();
+        stop();
+    }
+}
+</code></pre>
+<p>那么什么是“关闭钩子”呢？如果我们需要在JVM关闭时做一些清理工作，比如将缓存数据刷到磁盘上，或者清理一些临时文件，可以向JVM注册一个“关闭钩子”。“关闭钩子”其实就是一个线程，JVM在停止之前会尝试执行这个线程的run方法。</p>
+<p>“关闭钩子”CatalinaShutdownHook具体代码：</p>
+<pre><code class="language-java">protected class CatalinaShutdownHook extends Thread {
+    
+    @Override
+    public void run(){
+        try{
+            if(getServer() != null){
+            	Catalina.this.stop();
+        	}
+        }catch (Throwable ex){
+            ...
+        }
+        
+    }
+}
+</code></pre>
+<p>由上可知：所谓的“关闭钩子”其实就是执行了Server的stop方法，Server的stop方法会释放和清理所有的资源。</p>
+<h4 id="server组件">Server组件</h4>
+<p>Server组件的具体实现类是StandardServer。</p>
+<p>Server继承了LifecycleBase，它的生命周期被统一管理，并且它的子组件是Service，因此它还需要管理Service的生命周期，也就是说启动时调用Service组件的启动方法，在停止时调用它们的停止方法。Server在内部维护了若干Service组件，它是以数组来保存的，那Server是如何添加一个Service到数组中的呢？</p>
+<pre><code class="language-java">@Override
+public void addService(Service service){
+    
+    service.setServer(this);
+    
+    synchronized (servicesLock) {
+        //创建一个长度+1的新数组
+        Service result[] = new Service[services.length + 1];
+        
+        //将老的数据复制过去
+        System.arraycopy(services, 0 , results , services.length);
+        results[services.length] = service;
+        services = results;
+        
+        //启动Serviec组件
+        if(getState().isAvailable()){
+            try{
+                service.start();
+            }catch (LifecycleException e){
+                //Ignore
+            }
+        }
+        
+        //触发监听事件
+        support.firePropertyChange(&quot;service&quot; , null ,service);
+    }
+    
+}
+</code></pre>
+<p>由上可知，它并没有一开始就分配一个很长的数组，而是在添加的过程中动态地扩展数组长度，当添加一个新的Service实例时，会创建一个新数组并把原来数组内容复制到新数组，这样做的目的其实是为了节省内存空间。</p>
+<p>除此之外，Server组件还有一个重要的任务时启动一个Socket来监听停止端口，这就是为什么能通过shutdown命令来关闭Tomcat。</p>
+<p>上面Catalina的启动方法的最后一行代码就是调用了Server的await方法。</p>
+<p>在await方法里会创建一个Socket监听8005端口，并在一个死循环里接收Socket上的连接请求，如果会有新的连接到来就建立连接，然后从Socket中读取数据；如果读到的数据是停止命令&quot;SHUTDOWN&quot;，就会退出循环，进入stop流程。</p>
+<pre><code class="language-java">    /**
+     * The port number on which we wait for shutdown commands.
+     */
+    private int port = 8005; 
+
+
+// Set up a server socket to wait on
+        try {
+            awaitSocket = new ServerSocket(port, 1,
+                    InetAddress.getByName(address));
+        } catch (IOException e) {
+            log.error(&quot;StandardServer.await: create[&quot; + address
+                               + &quot;:&quot; + port
+                               + &quot;]: &quot;, e);
+            return;
+        }
+
+        try {
+            awaitThread = Thread.currentThread();
+
+            // Loop waiting for a connection and a valid command
+            while (!stopAwait) {
+                ServerSocket serverSocket = awaitSocket;
+                if (serverSocket == null) {
+                    break;
+                }
+
+                // Wait for the next connection
+                Socket socket = null;
+                StringBuilder command = new StringBuilder();
+                try {
+                    InputStream stream;
+                    long acceptStartTime = System.currentTimeMillis();
+                    try {
+                        socket = serverSocket.accept();
+                        socket.setSoTimeout(10 * 1000);  // Ten seconds
+                        stream = socket.getInputStream();
+                    } catch (SocketTimeoutException ste) {
+                        // This should never happen but bug 56684 suggests that
+                        // it does.
+                        log.warn(sm.getString(&quot;standardServer.accept.timeout&quot;,
+                                Long.Of(System.currentTimeMillis() - acceptStartTime)), ste);
+                        continue;
+                    } catch (AccessControlException ace) {
+                        log.warn(&quot;StandardServer.accept security exception: &quot;
+                                + ace.getMessage(), ace);
+                        continue;
+                    } catch (IOException e) {
+                        if (stopAwait) {
+                            // Wait was aborted with socket.close()
+                            break;
+                        }
+                        log.error(&quot;StandardServer.await: accept: &quot;, e);
+                        break;
+                    }
+
+                    // Read a set of characters from the socket
+                    int expected = 1024; // Cut off to avoid DoS attack
+                    while (expected &lt; shutdown.length()) {
+                        if (random == null)
+                            random = new Random();
+                        expected += (random.nextInt() % 1024);
+                    }
+                    while (expected &gt; 0) {
+                        int ch = -1;
+                        try {
+                            ch = stream.read();
+                        } catch (IOException e) {
+                            log.warn(&quot;StandardServer.await: read: &quot;, e);
+                            ch = -1;
+                        }
+                        // Control character or EOF (-1) terminates loop
+                        if (ch &lt; 32 || ch == 127) {
+                            break;
+                        }
+                        command.append((char) ch);
+                        expected--;
+                    }
+                } finally {
+                    // Close the socket now that we are done with it
+                    try {
+                        if (socket != null) {
+                            socket.close();
+                        }
+                    } catch (IOException e) {
+                        // Ignore
+                    }
+                }
+
+                // Match against our command string
+                boolean match = command.toString().equals(shutdown);
+                if (match) {
+                    log.info(sm.getString(&quot;standardServer.shutdownViaPort&quot;));
+                    break;
+                } else
+                    log.warn(&quot;StandardServer.await: Invalid command '&quot;
+                            + command.toString() + &quot;' received&quot;);
+            }
+        } finally {
+            ServerSocket serverSocket = awaitSocket;
+            awaitThread = null;
+            awaitSocket = null;
+
+            // Close the server socket and return
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    // Ignore
+                }
+            }
+        }
+</code></pre>
+<h4 id="service组件">Service组件</h4>
+<p>Service 组件的具体实现类是StandardService，我们先来看看它的定义以及关键的成员变量。</p>
+<pre><code class="language-java">public class StandardService extends LifecycleBase implements Service {
+    //名字
+    private String name = null;
+    
+    //Server实例
+    private Server server =null;
+    
+    //连接器数组
+    protected Connector connectors[] = new Connector[0];
+    private final Object connectorsLock = new Object();
+    
+    //对应的Engine容器
+    private Engine engine = null;
+    
+    //映射器及其监听器
+    protected final Mapper mapper = new Mapper();
+    protected final MapperListener mapperListener = new MapperListener(this);
+    
+}
+</code></pre>
+<p>StandardService继承了LifecycleBase抽象类，此外StandardService中还有一些我们熟悉的组件，比如Server、Connector、Engine和Mapper。</p>
+<p>那么为什么还要一个MapperListener？这是因为Tomcat支持热部署，当Web应用的部署发生变化时，Mapper中的映射信息也要跟着变化，MapperListener就是一个监听器，它监听容器的变化，并把信息更新到Mapper中，这就是典型的观察者模式。</p>
+<p>作为”管理“角色的组件，最重要的是维护其他组件的生命周期。此外在启动各种组件时，要注意它们的依赖关系，也就是说，要注意启动的顺序，我们来看Service启动方法：</p>
+<pre><code class="language-java">protected void startInternal() throws LifecycleException {
+    
+    //1.触发启动监听器
+    setState(LifecycleState.STARTING);
+    
+    //2.先启动Engine，Engine会启动它的子容器
+    if(engine != null){
+        synchronized (engine){
+            engine.start();
+        }
+    }
+    
+    //3.再启动Mapper监听器
+    mapperListener.start();
+    
+    //4.最后启动连接器，连接器会启动它子组件，比如Endpoint
+    synchronized (connectorsLock){
+        for(Connector connector : connectors){
+            if(connector.getState() != LifecycleState.FAILED){
+                connector.start();
+            }
+        }
+    }
+    
+}
+</code></pre>
+<p>从启动方法可以看到，Service先启动了Engine组件，再启动Mapper监听器，最后才是启动连接器，这很好理解，因为内层组件启动好了才能对外提供服务，才能启动外层的连接器组件。而Mapper也依赖容器组件，容器组件启动好了才能监听它们的变化，因此Mapper和MapperListener在容器组件之后启动，组件停止的顺序跟启动顺序正好相反。也是基于它们的依赖关系。</p>
+<h4 id="engine组件">Engine组件</h4>
+<p>最后我们再来看看顶层的容器组件Engine具体是如何实现的，Engine本质也是一个容器，因此继承了ContainerBase基类，并且实现了Engine接口。</p>
+<pre><code class="language-java">public class StandardEngine extends ContainerBase implements Engine {
+  
+}
+</code></pre>
+<p>Engine的子容器是Host，所以它持有了一个Host容器的数组，这些功能都被抽象到了ContainerBase中，ContainerBase中有这样一个数据结构：</p>
+<pre><code class="language-java">protected final HashMap&lt;String ,Container&gt; children = new HashMap&lt;&gt;();
+</code></pre>
+<p>ContainerBase 用HashMap保存了它的子容器，并且ContainerBase还实现了子容器的”增删改查“，甚至连子组件的启动和停止都提供了默认实现，比如ContainerBase会用专门的线程池启动子容器。</p>
+<pre><code class="language-java">for( int i = 0; i &lt; children.length ; i++){
+    result.add(startStopExecutor.submit(new StartChild(children[i])));
+}
+</code></pre>
+<p>所以Engine在启动Host子容器时就直接重用了这个方法。</p>
+<p>对Engine自己做了什么呢？我们知道容器组件最重要的功能就是处理请求，而Engine容器对请求的”处理“，其实就是把请求转发给某一个Host子容器来处理，具体是通过Valve来实现的。</p>
+<p>每个容器组件都有一个Pipeline，而Pipeline中有一个基础阀（Basic Valve），而Engine容器的基础阀定义如下：</p>
+<pre><code class="language-java">final class StandardEngineValve extends ValveBase{
+    
+    public final void invoke(Request request , Response response) throws IOException,ServletException {
+        
+        //拿到请求中的HOST容器
+        Host host = request.getHost();
+        if(host == null){
+            return ;
+        }
+        
+        //调用Host容器中的Pipeline中的第一个Valve
+        host.getPipeline().getFirst().invoke(request, response);
+        
+    }
+}
+</code></pre>
+<p>这个基础阀的实现非常简单，就是把请求转发到Host容器。从代码中可以看到，处理请求的Host容器对象是从请求中拿到的，请求对象中怎么会有Host容器呢？这是因为请求到达Engine容器中之前，Mapper组件已经对请求进行了路由处理，Mapper组件通过请求的URL定位了相应的容器，并且把容器对象保存到了请求对象中。</p>
+<h4 id="总结">总结</h4>
+<p>Tomcat的请求过程具体是由启动类和”高层“组件来完成的，它们都承担着”管理“的角色，负责将子组件创建出来，并将它们拼装在一起，同时也掌握子组件的”生杀大权“，</p>
+<p>当我们自己设计组件时，需要考虑两个方面：</p>
+<p>首先要选用合适的数据结构来保存子组件，比如Server用数组来保存Service组件，并且采取动态扩容的方式，这是因为数组结构简单，占用内存小；再比如ContainerBase用HashMap来保存子容器，虽然Map占用内存会多一点，但是可以通过Map来快速的查找子容器。因此在实际的工作中，要根据具体的场景和需求来选用合适的数据结构。</p>
+<p>其次还需要根据子组件依赖关系来决定它们的启动和停止顺序，以及如何优雅的停止，防止异常情况下的资源泄漏。</p>
+<p>Server组件在启动连接器和容器时，都分别加了锁，这是为什么？</p>
+<blockquote>
+<p>在嵌入式的情况下启动，不能预测用户的行为，可能不小心起了两个线程来启动同一个Server实例，防范于未然，即使启动阶段加个保险也没多大开销，一次性的。</p>
+</blockquote>
+<p>Q: 如果映射关系不变，而是某个具体的Servlet的方法处理逻辑变了，热部署也可以解决重启tomcat的尴尬吗？</p>
+<p>A: 作者回复: 那不叫热部署，叫热加载。热部署和热加载都不需要重启Tomcat。</p>
+<hr>
+<h3 id="比较jetty架构特点之connector组件">比较：Jetty架构特点之Connector组件</h3>
+<h4 id="鸟瞰jetty整体架构">鸟瞰Jetty整体架构</h4>
+<blockquote>
+<p>Jetty Server就是由多个Connector（连接器）、多个Handler（处理器），以及一个线程池组成。</p>
+<p>如图：</p>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/2020/06/18/20200618185206.jpg" alt="" loading="lazy"></figure>
+</blockquote>
+<p>跟Tomcat一样，Jetty也有Http服务器和Servlet容器的功能，因此Jetty中的Connector组件和Handler组件分别来实现这两个功能，而这两个组件工作所需要的线程资源都直接从一个全局线程池ThreadPool中获取。</p>
+<p>Jetty Server可以有多个Connector在不同的端口监听客户请求，而对于请求处理的Handler组件，也可以根据具体场景使用不同的Handler。这样的设计提高了Jetty的灵活性，需要支持Servlet，则可以使用ServletHandler；需要支持Session，则再增加一个SessionHandler。也就是说可以不使用Servlet或者Session，只要不配置这个Handler就行了。为了启动和协调上面的核心组件工作，Jetty提供了一个Server类来做这个事情，它负责创建并初始化Connector、Handler、ThreadPool组件，然后调用start方法启动它们。</p>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/2020/06/18/20200618201133.jpg" alt="" loading="lazy"></figure>
+<p>我们对比一个Tomcat的整体架构图，你会发现Tomcat在整体上跟Jetty很相似，它们的第一个区别是Jetty没有Service的概念，Tomcat中的Service包装了多个连接器和一个容器组件，一个Tomcat实例可以配置多个Service，不同的Service通过不同的连接器监听不同的端口；而Jetty中Connector是被所有Handler共享的。</p>
+<p>它们的第二个区别是，在Tomcat中每个连接器都有自己的线程池，而在Jetty中所有的Connector共享一个全局的线程池。</p>
+<h4 id="jetty的connector组件">Jetty的Connector组件</h4>
+<p>跟Tomcat一样，Connector的主要功能是对I/O模型和应用层协议的封装。I/O模型方面，最近的Jetty9版本只支持NIO，因此Jetty的Connector设计有明显的Java NIO通信模型的痕迹，至于应用层协议方面，跟Tomcat的Processor一样，Jetty抽象出了Connection组件来封装应用层协议的差异。</p>
+<h4 id="java-nio-回顾">Java NIO 回顾</h4>
+<p>可以去<a href="http://ifeve.com/java-nio-all/">java并发网</a>学习，或者极客时间的<a href="https://time.geekbang.org/course/intro/100036701">Netty课程</a>，JAVA NIO的核心组件是Channel、Buffer和Selector。Channel表示一个连接，可以理解为一个Socket，通过它可以读取和写入数据。但是并不能直接操作数据，需要通过Buffer来中转。</p>
+<p>Selector可以用来检测Channel上的I/O事件，比如读就绪、写就绪、连接就绪，一个Selector可以同时处理多个Channel，因此单个线程可以监听多个Channel，这样会大量减少线程上下文切换的开销。如：</p>
+<p>首先，创建服务端Channel，绑定监听端口并把Channel设置为非阻塞方式。</p>
+<pre><code class="language-java">ServerSocketChannel server = ServerSocketChannel.open();
+server.socket().bind(new InetSocketAddress(port));
+server.configureBlocking(false);
+</code></pre>
+<p>然后，创建Selector，并在Selector中注册Channel感兴趣的事件OP_ACCEPT，告诉Selector如果客户端有新的连接请求到这个端口就通知我。</p>
+<pre><code class="language-java">Selector selector = Selector.open();
+server.register(selector, SelectionKey.OP_ACCEPT);
+</code></pre>
+<p>接下来，Selector会在一个死循环里不断地调用select去查询I/O状态，select会反馈一个SelectionKey列表，Selector会遍历这个列表，看看是否有”客户“感兴趣的事件，如果有，就采取相应的动作。</p>
+<p>比如下面这个例子，如果有新的连接请求，就会建立一个新的连接。连接建立后，再注册Channel的可读事件到Selector中，告诉Selector我对这个Channel上是否有新的数据到达感兴趣。</p>
+<pre><code class="language-java">while(true) {
+	selector.select();			//查询I/O事件
+    for(Iterator&lt;SelectionKey&gt; i = selector.selectedKeys().iterator(); i.hasNext();) {
+        SelectionKey key = i.next();
+        i.remove();
+        
+        if(key.isAcceptable()){
+            //建立一个新连接
+            SocketChannel client = server.accept();
+            client.configureBlocking(false);
+            
+            //连接建立后，告诉Selector，我现在对I/O可读事件感兴趣。
+            client.register(selector,SelectionKey.OP_READ);
+        }
+    }
+}
+</code></pre>
+<p>简单回顾完服务端NIO编程之后，会发现服务端再I/O通信上主要完成了三件事情：<strong>监听连接、I/O事件查询以及数据读写</strong>。因此Jetty设计了 <strong>Acceptor、SelectorManager和Connection来分别做这三件事情</strong>；</p>
+<h4 id="acceptor">Acceptor</h4>
+<p>Acceptor用于接受请求，跟Tomcat一样，Jetty也有独立的Acceptor线程组用于处理连接请求。再Connector的实现类中，有一个_acceptors的数组，在Connector启动的时候，会根据 _acceptors数组的长度创建对应数量的Acceptor，而Acceptor的个数可以配置。</p>
+<pre><code>for(int i = 0; i &lt; _acceptors.length;i++){
+	Acceptor a = new Acceptor(i);
+	getExecutor.execute(a);
+}
+</code></pre>
+<p>Acceptor是ServerConnector中的一个内部类，同时也是一个Runnable，Acceptor线程是通过getExecutor得到的线程池来执行的，前面提到这是一个全局的线程池。</p>
+<p>Acceptor通过阻塞的方式来接受连接，这一点跟Tomcat也是一样的。</p>
+<pre><code class="language-java">public void accept(int acceptId) throws IOException{
+    ServerSocketChannel serverChannel = _acceptChannel;
+    if(serverChannel != null &amp;&amp; serverChannel.isOpen()){
+        //这里是阻塞的
+        SocketChannel channel = serverChannel.accept();
+        //执行到这里时说明有请求进来了
+        accepted(channel);
+    }
+}
+</code></pre>
+<p>接受连接成功会调用accepted函数，accepted函数中会将SocketChannel设置为非阻塞模式，然后交给Selector去处理，因此这也就到了Selector的地界了。</p>
+<pre><code class="language-java">private void acceptor(SocketChannel channel) throws IOException{
+    channel.configureBlocking(false);
+    Socket socket = channel.socket();
+    configure(socket);
+    // _manager是SelectorManager实例，里面管理了所有的Selector实例
+    _manager.accept(channel);
+}
+</code></pre>
+<p>SelectorManager</p>
+<p>Jetty的Selector由SelectorManager类管理，而被管理的Selector叫做ManagedSelector。SelectorManager内部有一个ManagedSelector数组，真正干活的是ManagedSelector。咱们接着上面分析，看看在SelectorManager在accept方法里面做了什么。</p>
+<pre><code class="language-java">public void accept(SelectableChannel channel , Object attachment){
+    //选择一个ManagedSelector来处理Channel
+    final ManagedSelector selector = chooseSelector();
+    //提交一个任务Accept给ManagedSelector
+    selector.submit(selector.new Accept(channel ,attachment));
+}
+</code></pre>
+<p>SelectorManager 从本身的Selector数组中选一个Selector来处理这个Channel，并创建一个任务Accept交给ManagedSelector，ManagedSelector在处理这个任务主要做了两步：</p>
+<p>第一步，调用Selector的register方法把Channel注册到Selector上，拿到一个SelectionKey。</p>
+<pre><code class="language-java">_key = _channel.register(selector, SelectionKey.OP_ACCEPT ,this);
+</code></pre>
+<p>第二步，创建一个EndPoint和Connection，并跟这个SelectionKey(Channel)绑定在一起：</p>
+<pre><code class="language-java">private void createEndPoint(SelectableChannel channel , SelectionKey selectionKey) throws IOException{
+    //1.创建EndPoint
+    EndPoint endPoint = _selectorManager.newEndPoint(channel ,this,selectionKey);
+    
+    //创建Connection
+    Connection connection = _selectorManager.newConnection(channel , endPoint, selectionKey.attachment());
+    
+    //3.把EndPoint、Connection和SelectionKey绑在一起
+    endPoint.setConnection(connection);
+    selectionKey.attach(endPoint);
+    
+}
+</code></pre>
+<p>上面这两个过程是什么意思呢？打个比方，你到餐厅吃饭，先点菜（注册I/O事件），服务员（ManagedSelector）给你一个单子（SelectionKey），等菜做好了（I/O事件到了），服务员根据单子就知道是哪桌点了这个菜，于是喊一嗓子某某桌的菜做好了（调用了绑定在SelectionKey上的EndPoint的方法）。</p>
+<p>MenagedSelector并没有调用直接EndPoint的方法去处理数据，而是通过调用EndPoint的方法<strong>返回一个Runnable，然后把这个Runnable扔给线程池执行</strong>，这个Runnable才会去真正读数据和处理请求。</p>
+<h4 id="connection">Connection</h4>
+<p>这个Runnable是EndPoint的一个内部类，它会调用Connection的回调方法来处理请求。Jetty的Connection组件类比就是Tomcat的Processor，负责具体协议的解析，得到Request对象，并调用Handler容器进行处理。下面我简单介绍一下它的具体实现类HttpConnection对请求和响应的处理过程。</p>
+<p><strong>请求处理</strong>：HttpConnection并不会主动向EndPoint读取数据，而是向EndPoint中注册一堆回调方法：</p>
+<pre><code class="language-java">getEndPoint().fillInterested(_readCallback);
+</code></pre>
+<p>这段代码就是告诉EndPoint，数据到了你就调我的这些回调方法_readCallback吧，有点异步I/O的感觉，也就是说Jetty在应用层面磨你了异步I/O模型。</p>
+<p>而在回调方法_readCallback里，会调用EndPoint的接口去读数据，读完后让Http解析器去解析字节流，Htpp解析器会将解析后的数据，读完后让Http解析器去解析字节流，Http解析器会将解析后的数据，包括请求行、请求头相关信息保存到Request对象里。</p>
+<p><strong>响应处理</strong>：Connection调用Handler进行业务处理,Handler会通过Response对象来操作响应流，向流里面写入数据，HttpConnection再通过EndPoint把数据写到channel，这样一次响应就完成了。</p>
+<p>如图，Connector的工作流程</p>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/Wipeher/Picbed_PicGo_Wipeher/master/img/2020/06/18/20200618233327.jpg" alt="" loading="lazy"></figure>
+<ol>
+<li>Acceptor监听连接请求，当有连接请求达到时就接受连接，一个连接对应一个Channel，，Acceptor将Channel交给ManagedSelector来处理。</li>
+<li>ManagedSelector把Channel注册到Selector上，并创建一个EndPoint和Connection跟这个Channel绑定，接着就不断地检测I/O事件。</li>
+<li>I/O事件到了就调用EndPoint的方法拿到一个Runnable，并扔给线程池执行。</li>
+<li>线程池中调度某个线程执行Runnable。</li>
+<li>Runnable执行时，调用回调函数，这个回调函数是Connection注册到EndPoint中的。</li>
+<li>回调函数内部实现，其实就是调用EndPoint的接口方法来读数据。</li>
+<li>Connection解析读到的数据，生成请求对象并交给Handler组件去处理。</li>
+</ol>
+<p><em><strong>小结</strong></em>：</p>
+<p>Jetty Server就是由多个Connector、多个Handler，以及一个线程池组成，在设计上简洁明了。</p>
+<p>Jetty的Connector只支持NIO模型，跟Tomcat的NioEndpoint组件一样，它也是通过Java的NIO API实现的。</p>
+<p>NIO编程有三个关键组件：Channel、Buffer和Selector，而核心是Selector。为了方便使用，Jetty在原生Selector组件的基础上做了一些封装，实现了ManagedSelector组件。</p>
+<p>在线程模型设计上Tomcat的NioEndPoint跟Jetty的Connector是相似的，都是用一个Acceptor数组监听连接，用一个Selector数组侦测I/O事件，用一个线程池执行请求。它们的不同点在于，Jetty使用了一个全局的线程池，所有的线程池资源都是从线程池来分配的。</p>
+<p>Jetty Connector设计中的一大特点是，使用了回调函数来磨你异步I/O，比如Connection向EndPoint注册了一堆回调函数。它的本质<strong>将函数当作一个参数来传递</strong>，告诉对方，你准备好了就调用这个回调函数。</p>
+<p><em><strong>思考</strong></em>：</p>
+<p>Jetty 的 Connector 主要完成了三件事件：接收连接、I/O 事件查询以及数据读写。因此 Jetty 设计了 Acceptor、SelectorManager 和 Connection 来做这三件事情。今天的思考题是，为什么要把这些组件跑在不同的线程里呢？</p>
+<p>如果使用一个线程阻塞在此处，会导致请求都会被等待</p>
+<hr>
+<h3 id="比较jetty架构特点之handler组件">比较：Jetty架构特点之Handler组件</h3>
+<hr>
+<h3 id="总结从tomcat和jetty中提炼组件化设计规范">总结：从Tomcat和Jetty中提炼组件化设计规范</h3>
+<hr>
+<h3 id="实战优化并提高tomcat启动速度">实战：优化并提高Tomcat启动速度</h3>
+<hr>
+<h3 id="学习源码的方法">学习源码的方法</h3>
+<hr>
+<h2 id="连接器">连接器</h2>
+<h3 id="nioendpoint组件tomcat如何实现非阻塞io">NioEndPoint组件：Tomcat如何实现非阻塞I/O？</h3>
+<p><em><strong>小结</strong></em>：</p>
+<p>平时说的<strong>阻塞或者非阻塞</strong>是指应用程序在<strong>发起I/O操作时，是立即返回还是等待</strong>。而<strong>同步和异步</strong>，是指应用程序在与内核通信时，<strong>数据从内核空间到应用空间的拷贝，是由内核主动发起还是应用程序来触发。</strong></p>
+<h3 id="nio2endpoint组件tomcat如何实现异步io">Nio2EndPoint组件：Tomcat如何实现异步I/O？</h3>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%AE%B9%E5%99%A8%E5%9F%BA%E7%A1%80">容器基础</a>
+<ul>
+<li><a href="#web%E5%AE%B9%E5%99%A8%E6%98%AF%E4%BB%80%E4%B9%88">Web容器是什么？</a></li>
+<li><a href="#http-%E5%8D%8F%E8%AE%AE">HTTP 协议</a></li>
+<li><a href="#servlet%E8%A7%84%E8%8C%83%E5%92%8C%E5%AE%B9%E5%99%A8">Servlet规范和容器</a></li>
+</ul>
+</li>
+<li><a href="#%E5%AE%B9%E5%99%A8%E6%9E%B6%E6%9E%84">容器架构</a>
+<ul>
+<li><a href="#tomcat%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84">Tomcat系统架构</a>
+<ul>
+<li><a href="#%E8%BF%9E%E6%8E%A5%E5%99%A8%E8%AE%BE%E8%AE%A1">连接器设计</a></li>
+<li><a href="#%E5%AE%B9%E5%99%A8%E7%9A%84%E8%AE%BE%E8%AE%A1">容器的设计</a></li>
+</ul>
+</li>
+<li><a href="#tomcat%E4%B8%80%E9%94%AE%E5%BC%8F%E5%90%AF%E5%81%9C">Tomcat一键式启停</a></li>
+<li><a href="#tomcat%E7%9A%84%E9%AB%98%E5%B1%82%E4%BB%AC%E9%83%BD%E5%9C%A8%E8%B4%9F%E8%B4%A3%E5%81%9A%E4%BB%80%E4%B9%88">Tomcat的“高层们”都在负责做什么</a>
+<ul>
+<li><a href="#catalina">Catalina</a></li>
+<li><a href="#server%E7%BB%84%E4%BB%B6">Server组件</a></li>
+<li><a href="#service%E7%BB%84%E4%BB%B6">Service组件</a></li>
+<li><a href="#engine%E7%BB%84%E4%BB%B6">Engine组件</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+<li><a href="#%E6%AF%94%E8%BE%83jetty%E6%9E%B6%E6%9E%84%E7%89%B9%E7%82%B9%E4%B9%8Bconnector%E7%BB%84%E4%BB%B6">比较：Jetty架构特点之Connector组件</a>
+<ul>
+<li><a href="#%E9%B8%9F%E7%9E%B0jetty%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84">鸟瞰Jetty整体架构</a></li>
+<li><a href="#jetty%E7%9A%84connector%E7%BB%84%E4%BB%B6">Jetty的Connector组件</a></li>
+<li><a href="#java-nio-%E5%9B%9E%E9%A1%BE">Java NIO 回顾</a></li>
+<li><a href="#acceptor">Acceptor</a></li>
+<li><a href="#connection">Connection</a></li>
+</ul>
+</li>
+<li><a href="#%E6%AF%94%E8%BE%83jetty%E6%9E%B6%E6%9E%84%E7%89%B9%E7%82%B9%E4%B9%8Bhandler%E7%BB%84%E4%BB%B6">比较：Jetty架构特点之Handler组件</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93%E4%BB%8Etomcat%E5%92%8Cjetty%E4%B8%AD%E6%8F%90%E7%82%BC%E7%BB%84%E4%BB%B6%E5%8C%96%E8%AE%BE%E8%AE%A1%E8%A7%84%E8%8C%83">总结：从Tomcat和Jetty中提炼组件化设计规范</a></li>
+<li><a href="#%E5%AE%9E%E6%88%98%E4%BC%98%E5%8C%96%E5%B9%B6%E6%8F%90%E9%AB%98tomcat%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6">实战：优化并提高Tomcat启动速度</a></li>
+<li><a href="#%E5%AD%A6%E4%B9%A0%E6%BA%90%E7%A0%81%E7%9A%84%E6%96%B9%E6%B3%95">学习源码的方法</a></li>
+</ul>
+</li>
+<li><a href="#%E8%BF%9E%E6%8E%A5%E5%99%A8">连接器</a>
+<ul>
+<li><a href="#nioendpoint%E7%BB%84%E4%BB%B6tomcat%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9D%9E%E9%98%BB%E5%A1%9Eio">NioEndPoint组件：Tomcat如何实现非阻塞I/O？</a></li>
+<li><a href="#nio2endpoint%E7%BB%84%E4%BB%B6tomcat%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E5%BC%82%E6%AD%A5io">Nio2EndPoint组件：Tomcat如何实现异步I/O？</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://Wipeher.github.io/post/jdk-bing-fa-bao/">
+              <h3 class="post-title">
+                JDK 并发包
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://Wipeher.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
