@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://Wipeher.github.io</id>
     <title>Gridea</title>
-    <updated>2020-06-23T15:28:46.467Z</updated>
+    <updated>2020-07-02T17:57:50.688Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://Wipeher.github.io"/>
     <link rel="self" href="https://Wipeher.github.io/atom.xml"/>
@@ -10,6 +10,27 @@
     <logo>https://Wipeher.github.io/images/avatar.png</logo>
     <icon>https://Wipeher.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[Mysql学习记录]]></title>
+        <id>https://Wipeher.github.io/post/mysql-xue-xi-ji-lu/</id>
+        <link href="https://Wipeher.github.io/post/mysql-xue-xi-ji-lu/">
+        </link>
+        <updated>2020-07-02T17:57:28.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="mysql安装">Mysql安装</h2>
+<ul>
+<li>
+<p>下载rpm文件</p>
+<pre><code class="language-shell">yum localinstall http://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm
+</code></pre>
+</li>
+<li>
+<p>安装Mysql数据库</p>
+<pre><code class="language-shell">yum install mysql-community-server -y 
+</code></pre>
+</li>
+</ul>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[深入理解Tomcat]]></title>
         <id>https://Wipeher.github.io/post/shen-ru-li-jie-tomcat/</id>
